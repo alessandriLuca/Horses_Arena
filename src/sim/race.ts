@@ -491,6 +491,11 @@ export function simulateRace(spec: RaceSpec, now: number): RaceResult {
         for (const o of runners) if (onTrack(o) && o.status === "run") { o.vd += 1.2 + rng.next(); addMod(o, { speed: 0.96, dur: 2, label: "raffica" }); stim(o, "botti", 0.3); }
         return;
       }
+      if (m === "ufo") {
+        stopR(target, 2.6);
+        target.arousal = Math.min(1.5, target.arousal + 0.6);
+        return;
+      }
       if (m === "treat") {
         addMod(target, { speed: 1.07, accel: 1.3, dur: 4, label: "premio" });
         target.comfort = Math.max(target.comfort, 0.6);

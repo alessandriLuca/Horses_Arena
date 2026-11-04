@@ -6,6 +6,28 @@ const fill = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => (v[k] ?? "") + "");
 
 const L = {
   it: {
+    nonsense: [
+      "Lo sapevate che {a} da piccolo voleva fare il ballerino classico? Poi è ingrassato.",
+      "{b} stamattina ha mangiato tre chili di carote e un tiramisù. Si vede, eh.",
+      "Mi dicono dalla regia che {c} ha un profilo su un'app di incontri. Cerca una cavalla seria.",
+      "{a} corre così perché ha visto un cartello con scritto 'saldi'.",
+      "Pare che il fantino di {b} sia mio nipote. Non lo riconosco, porta il casco. Ciao Gennarino!",
+      "{last} è in ultima posizione ma secondo me sta facendo un'altra gara, tutta sua.",
+      "Questo è il momento in cui al mio paese si tira fuori la porchetta.",
+      "{a} ha un cugino che fa il cavallo a dondolo in un asilo. Non si parlano più.",
+      "Attenzione, mi segnalano che {c} sta pensando ai fatti suoi. Come mio marito buonanima.",
+      "Sapete perché i cavalli dormono in piedi? Perché il letto costa. Ah ah ah! Scusate.",
+      "{b} ha la criniera più bella della corsa. Usa il balsamo della Lidl, me l'ha detto lui.",
+      "Il veterinario mi conferma che {a} ha il cuore grande così. E anche lo stomaco.",
+      "Se vince {last} offro da bere a tutto l'ippodromo. Tanto non vince.",
+      "{c} corre col vento in poppa. E anche con qualcos'altro in poppa, si sente da qui.",
+      "Questi cavalli corrono più veloci di mia cognata quando c'è da pagare il conto.",
+      "{a} sta pensando: 'chi me l'ha fatto fare'. Lo capisco.",
+      "Un piccione si è appena seduto sulla testa del fantino di {b}. Nessuno se n'è accorto tranne me.",
+      "Dalla tribuna stampa mi chiedono la ricetta del ragù. Dopo la corsa, ragazzi, dopo!",
+      "Secondo i miei calcoli, che sono sempre sbagliati, vince {last}.",
+      "{a} da grande vuole fare l'unicorno. Gli serve solo il corno. E un po' di glitter.",
+    ],
     incident: ["Imprevisto in pista!", "Ma cosa succede? Un imprevisto!", "Madonna, che confusione in pista!"],
     disobey: ["{a} se ne frega degli ordini del fantino! Vuole fare di testa sua, come mio nipote.", "Il fantino di {a} tira le redini, ma lui fa come gli pare!"],
     intro: [
@@ -19,9 +41,9 @@ const L = {
     badStart: ["{a} è partito con calma, come il treno regionale.", "{a} si è svegliato in ritardo. Come mio nipote la domenica."],
     lead: ["In testa adesso c'è {a}!", "{a} prende il comando! Brava bestia!", "Comanda {a}. Ma la strada è lunga, eh."],
     surge: ["Guardate {a}! Sta risalendo come il prezzo della benzina!", "{a} recupera posizioni! Ha mangiato bene stamattina."],
-    bump: ["Contatto tra {a} e {b}! Ma che modi, ragazzi!", "{a} spinge {b}! Neanche alla fila delle poste!", "Spallata di {a} su {b}. Mamma mia, che maleducati."],
+    bump: ["{a} e {b} si scontrano! Sembra l'autoscontro della sagra!", "{a} spinge {b} come mia suocera al banco del pesce!", "Contatto tra {a} e {b}! Ma che modi, ragazzi!", "{a} spinge {b}! Neanche alla fila delle poste!", "Spallata di {a} su {b}. Mamma mia, che maleducati."],
     stumble: ["{a} inciampa! Attenzione!", "Oh! {a} mette male una zampa!", "{a} incespica... come lo zio dopo il terzo bicchiere."],
-    fall: ["CADUTO! {a} è a terra! Madonna santa!", "Oh no, è caduto {a}! Chiamate il veterinario! E pure il prete!", "{a} va giù! Spero non si sia fatto male, povera creatura."],
+    fall: ["CADUTO! {a} è a terra! Si è rotolato come una frittata!", "{a} è volato via come un sacco di patate! Il fantino adesso fa il paracadutista!", "CADUTO! {a} è a terra! Madonna santa!", "Oh no, è caduto {a}! Chiamate il veterinario! E pure il prete!", "{a} va giù! Spero non si sia fatto male, povera creatura."],
     rear: ["{a} si impenna! Ma che fai, il cavallo di Napoleone?", "{a} si alza sulle zampe di dietro! Scendi, che cadi!"],
     stop: ["{a} si è fermato! Ma che gli prende?", "{a} si pianta in mezzo alla pista. Pure lui sciopera?"],
     spook: ["{a} si spaventa! Di cosa poi... boh.", "Scarto improvviso di {a}! Avrà visto un fantasma."],
@@ -53,12 +75,24 @@ const L = {
     positions: ["Allora, la situazione: {a} in testa, poi {b}, e {c} terzo.", "Facciamo il punto come al telegiornale: comanda {a}, seguono {b} e {c}.", "{a} davanti, {b} secondo. Più dietro {last}, che se la prende comoda."],
     idle: ["Ai miei tempi i cavalli tiravano il carretto, altro che corse!", "Che belli tutti questi cavalli. Il nonno li avrebbe fatti diventare salame.", "Qualcuno ha visto i miei occhiali? Ah no, li ho in testa.", "Il fantino del {a} è proprio un bel giovanotto. È sposato?", "Mangiate qualcosa, che a vedere le corse si consuma!"],
     photo: ["FOTOFINISH! Non si capisce niente! Datemi gli occhiali!", "Arrivo al fotofinish tra {a} e {b}! Mamma mia!"],
-    winner: ["HA VINTO {a}!!! Portategli la porchetta!", "Vince {a}! Lo dicevo io che era il mio preferito!", "{a} trionfa! Che cavallo, che cavallo!"],
+    winner: ["HA VINTO {a}!!! Fa la ruota come un pavone! Portategli la porchetta, il vino e un notaio!", "VINCE {a}! Stasera si balla la tarantella in scuderia!", "HA VINTO {a}!!! Portategli la porchetta!", "Vince {a}! Lo dicevo io che era il mio preferito!", "{a} trionfa! Che cavallo, che cavallo!"],
     second: ["Secondo {b}, terzo {c}. Bravi tutti, ma soprattutto il primo."],
     dq: ["Squalificato {a} per doping! Vergogna! Alla nonna basta un caffè!"],
     last: ["E ultimo {a}... l'importante è partecipare. Dicono."],
   },
   en: {
+    nonsense: [
+      "Did you know {a} wanted to be a ballet dancer as a foal? Then it got chubby.",
+      "{b} ate three kilos of carrots and a tiramisù this morning. It shows.",
+      "The studio tells me {c} has a dating app profile. Looking for a serious mare.",
+      "{a} runs like that because it saw a sign saying 'SALE'.",
+      "{last} is last, but I think it's running a completely different race.",
+      "These horses run faster than my sister-in-law when the bill arrives.",
+      "A pigeon just sat on {b}'s jockey's head. Nobody noticed but me.",
+      "{a} wants to be a unicorn when it grows up. It just needs a horn. And some glitter.",
+      "By my calculations, which are always wrong, {last} will win.",
+      "Why do horses sleep standing up? Because beds are expensive! Ha ha! Sorry.",
+    ],
     incident: ["Something unexpected on the track!", "What on earth is happening?!"],
     disobey: ["{a} ignores the jockey's orders! Stubborn like my grandson."],
     intro: ["Good evening from {venue}! {dist} metres, going {going}, weather: {weather}. Grandma brought snacks.", "Welcome to {venue}! {n} horses, {dist} metres and a grandma with high blood pressure already!"],
@@ -282,8 +316,8 @@ export class Commentary {
     if (t - this.lastLine > 9 && t - this.lastPositions > 16 && rem > 250) {
       this.lastPositions = t;
       this.line("positions", v, -1, t);
-    } else if (t - this.lastLine > 13 && rem > 500) {
-      this.line("idle", v, -1, t);
+    } else if (t - this.lastLine > 7 && rem > 350) {
+      this.line(this.T.nonsense && Math.random() < 0.75 ? "nonsense" : "idle", v, -1, t);
     }
   }
 

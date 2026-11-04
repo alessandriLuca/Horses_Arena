@@ -623,6 +623,12 @@ export class RaceScene {
     (this.pops ??= []).push({ sp, until: this.time + dur, born: this.time, hm });
   }
 
+  /** Gag da cartone animato: spin, flip, bounce, stretch, shake, float, tiny, giant. */
+  gag(i, type, dur = 1.4) {
+    const hm = this.horses[i];
+    if (hm) hm.gag = { type, t0: this.time, dur };
+  }
+
   /** Il commento segnala eventi interessanti: la regia può fare un primo piano. */
   focusEvent(i, t, dur = 3.2) {
     if (this.mode !== "tv") return;
@@ -752,6 +758,28 @@ export class RaceScene {
       const whip = extra.whips?.has(i) ?? false;
       hm.update(dt * (extra.speed ?? 1), { speed: t < 0 ? 0 : Math.abs(st.v), status: st.status, jump, whip, riderless: st.riderless, t: this.time });
       hm.root.visible = true;
+      // gag cartoon
+      const base = hm.baseScale ?? (hm.baseScale = hm.root.scale.x);
+      hm.root.scale.setScalar(base);
+      if (hm.gag) {
+        const g = hm.gag;
+        const u = (this.time - g.t0) / g.dur;
+        if (u >= 1) hm.gag = null;
+        else {
+          const k = Math.sin(u * Math.PI);
+          switch (g.type) {
+            case "spin": hm.root.rotation.y += u * Math.PI * 4; break;
+            case "flip": hm.root.rotation.z = u * Math.PI * 2; hm.root.position.y += k * 3; break;
+            case "bounce": hm.root.position.y += Math.abs(Math.sin(u * Math.PI * 5)) * 1.8 * (1 - u); break;
+            case "stretch": hm.root.scale.set(base * (1 + 0.9 * k), base * (1 - 0.25 * k), base); break;
+            case "shake": hm.root.position.x += Math.sin(this.time * 70) * 0.25; hm.root.position.z += Math.cos(this.time * 63) * 0.25; break;
+            case "float": hm.root.position.y += k * 7; hm.root.rotation.x = Math.sin(this.time * 6) * 0.4 * k; break;
+            case "tiny": hm.root.scale.setScalar(base * (1 - 0.6 * k)); break;
+            case "giant": hm.root.scale.setScalar(base * (1 + 1.2 * k)); break;
+            case "squash": hm.root.scale.set(base * (1 + 0.5 * k), base * (1 - 0.6 * k), base * (1 + 0.5 * k)); break;
+          }
+        }
+      }
       // fantino a terra
       if (st.riderless && !hm.fallenJockey.visible) {
         const fp = trackPoint(this.venue, s, Math.min(this.venue.width - 1, st.d + 1.2));

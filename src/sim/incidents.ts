@@ -2,7 +2,7 @@
 // mech = effetto fisico: runner (attraversa la pista), obstacle (oggetto a terra, fa inciampare),
 // slick (chiazza scivolosa), bang (rumore che spaventa), flyer (vola sopra il gruppo), rope (blocca un tratto),
 // gust (raffica laterale), treat (premio: il cavallo accelera), whistle (spavento mirato).
-export type Mech = "runner" | "obstacle" | "slick" | "bang" | "flyer" | "rope" | "gust" | "treat" | "whistle";
+export type Mech = "runner" | "obstacle" | "slick" | "bang" | "flyer" | "rope" | "gust" | "treat" | "whistle" | "ufo";
 
 export interface Incident {
   id: string;
@@ -122,6 +122,25 @@ export const INCIDENTS: Incident[] = [
   I("mela", "🍎", "treat", "Una mela rossa rotola davanti a lui: la insegue a tutta velocità!", "A red apple rolls in front of it: it chases it at full speed!"),
   I("cavalla", "💕", "treat", "Una bellissima cavalla nel recinto accanto lo guarda: accelera per fare il bullo!", "A beautiful mare watches from the paddock: it speeds up to show off!"),
   I("nonna_pina", "👵", "treat", "Nonna Pina sventola il fazzoletto dalla cabina! Il cavallo si commuove e accelera!", "Grandma Pina waves her hanky from the booth! The horse speeds up!"),
+  // demenziali
+  I("ufo", "🛸", "ufo", "UN UFO! Gli alieni rapiscono un cavallo per qualche secondo... e lo rimettono giù! Non gli piaceva!", "A UFO! Aliens abduct a horse for a few seconds... and put it back! They didn't like it!"),
+  I("ufo2", "👽", "ufo", "Un alieno scende e chiede al cavallo la strada per Milano. Il cavallo si ferma a spiegargliela!", "An alien asks the horse for directions. The horse stops to explain!"),
+  I("meteorite", "☄️", "bang", "UN METEORITE! È caduto un meteorite vicino alla pista! Nessuno si è fatto male, ma il mio cuore sì!", "A METEORITE just landed next to the track!"),
+  I("merenda", "🥪", "runner", "La nonna di un fantino entra in pista a portargli la merenda! Mangia, che sei sciupato!", "A jockey's grandma walks onto the track with his lunch!"),
+  I("mimi", "🤡", "runner", "Una compagnia di mimi attraversa la pista dentro una scatola invisibile!", "A troupe of mimes crosses the track inside an invisible box!"),
+  I("frati", "⛪", "bang", "Un coro di frati intona il Gregoriano a tutto volume! I cavalli si fanno il segno della croce!", "A monks' choir starts singing at full volume!"),
+  I("tappeto", "🧞", "rope", "Un venditore di tappeti srotola un tappeto persiano in pista! Bello, ma non è il momento!", "A carpet seller unrolls a Persian rug across the track!"),
+  I("dinosauro", "🦖", "runner", "Un uomo vestito da dinosauro in pista! O è un dinosauro vero? Non guardate!", "A man in a dinosaur costume! Or is it a real one?!"),
+  I("pinguino", "🐧", "runner", "Un pinguino! Come c'è finito un pinguino all'ippodromo?!", "A penguin! How did a penguin get to the racecourse?!"),
+  I("orchestra", "🎻", "bang", "Un'orchestra sinfonica attacca la Cavalcata delle Valchirie! Si sale di livello!", "A symphony orchestra starts playing! Epic!"),
+  I("lavatrice", "🧺", "obstacle", "Una lavatrice in centrifuga rotola in pista! Ma chi la porta una lavatrice all'ippodromo?!", "A washing machine on spin cycle rolls onto the track!"),
+  I("torta", "🎂", "slick", "La torta di compleanno del presidente è finita in pista! Panna ovunque!", "The president's birthday cake landed on the track! Cream everywhere!"),
+  I("sosia", "🕴️", "runner", "Un sosia di un famoso cantante attraversa la pista cantando! Tutti si girano!", "A celebrity lookalike crosses the track singing!"),
+  I("gonfiabile", "🦩", "obstacle", "Un fenicottero gonfiabile gigante vola dalla piscina dei VIP in pista!", "A giant inflatable flamingo flies onto the track!"),
+  I("matrimonio", "💍", "runner", "Un uomo si inginocchia in pista per chiedere la mano alla fidanzata! Lei dice sì! I cavalli applaudono!", "A man proposes on the track! She says yes!"),
+  I("tifoso_cavallo", "🐎", "runner", "Un tifoso travestito da cavallo si mette a correre insieme agli altri! Ed è pure veloce!", "A fan dressed as a horse joins the race! And he's fast!"),
+  I("pizzaiolo", "👨‍🍳", "flyer", "Un pizzaiolo lancia la pasta della pizza in aria e finisce in testa a un fantino!", "A pizza chef throws dough in the air and it lands on a jockey!"),
+  I("cassa", "💰", "treat", "Si apre il furgone portavalori! Piovono banconote! Un cavallo si esalta e accelera!", "The cash van opens! Banknotes rain down! A horse gets excited!"),
 ];
 
 export const INCIDENT_MAP = new Map(INCIDENTS.map((x) => [x.id, x]));
