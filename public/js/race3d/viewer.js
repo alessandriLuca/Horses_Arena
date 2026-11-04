@@ -176,9 +176,10 @@ export function openViewer(root, opts) {
           scene.gag(e.a, fx?.[0] ?? GAGQ[e.q] ?? "spin", 1.6);
           if (fx?.[2] && e.b !== undefined) setTimeout(() => scene.gag(e.b, fx[2], 1.3), 250);
         }
-        else if (e.k === "fall" || e.k === "hurdle_fall") { scene.gag(e.a, "flip", 1.2); scene.pop(e.a, "💫", 3); }
-        else if (e.k === "bump" && (e.v ?? 0) > 0.3) { scene.gag(e.a, "squash", 0.6); if (e.b !== undefined) scene.gag(e.b, "shake", 0.8); }
-        else if (e.k === "stumble") scene.gag(e.a, "shake", 0.7);
+        else if (e.k === "fall" || e.k === "hurdle_fall") { scene.ragdoll(e.a, "fall", Math.random() < 0.5 ? 1 : -1); scene.pop(e.a, "💫", 3.5); }
+        else if (e.k === "bump") { scene.ragdoll(e.a, "bump", -1); if (e.b !== undefined) scene.ragdoll(e.b, "bump", 1); }
+        else if (e.k === "stumble") scene.ragdoll(e.a, "stumble", Math.random() < 0.5 ? 1 : -1);
+        else if (e.k === "hazard" && (e.x === "buccia" || e.x === "olio")) scene.ragdoll(e.a, "slip", Math.random() < 0.5 ? 1 : -1);
         else if (e.k === "spook" || e.k === "rear") scene.gag(e.a, "bounce", 1.2);
         else if (e.k === "incident" && (e.x === "ufo" || e.x === "ufo2")) scene.gag(e.a, "float", 2.6);
         else if (e.k === "incident") scene.gag(e.a, "shake", 1);
