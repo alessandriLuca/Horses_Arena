@@ -12,6 +12,7 @@ import { ageYears, ageFactor, currentFatigue } from "./horse";
 import { STIMULI, SI, NSTIM, chooseStrategy, contextIndex, emptyExperience, STRATEGIES, type Stim } from "./learning";
 import { quirkById } from "./quirks";
 import { illnessPerf } from "../game/health";
+import { INCIDENTS, INCIDENT_MAP } from "./incidents";
 import type { Hazard, Mod, QCtx, RaceEntry, RaceEvent, RaceSpec, Runner, RunnerStatus } from "./types";
 import {
   venueById, trackPoint, railFactor, isCurve, startS, hurdlePositions, GOINGS, WEATHERS, mod as modn, lapLength,
@@ -22,6 +23,8 @@ const FRAME_EVERY = 4; // 5 frame al secondo nel replay
 const BODY = 2.4; // lunghezza cavallo (m)
 const WIDTH = 0.85; // ingombro laterale per le collisioni (m)
 
+/** Moltiplicatore di "caos": rende quirk e incidenti più frequenti (le corse devono essere spettacolari). */
+const CHAOS = 3;
 const DESIRED_RANK = [0, 0.2, 0.45, 0.7, 0.82, 0.5];
 const STATUS_CODE: Record<RunnerStatus, number> = { gate: 0, run: 1, stumble: 2, fallen: 3, rear: 4, stop: 5, done: 6, dnf: 7 };
 
@@ -269,7 +272,7 @@ export function simulateRace(spec: RaceSpec, now: number): RaceResult {
     harm(r, Math.min(1, 0.35 + sev * 0.5));
     ev({ k: "stumble", a: r.i, x: cause, v: Math.round(sev * 100) / 100 });
     // può cadere
-    const fallP = clamp(sev * 0.16 * (1 - r.h.stats.agility / 160) * going.slip * luckF(r), 0, 0.5);
+    const fallP = clamp(sev * 0.32 * (1 - r.h.stats.agility / 160) * going.slip * luckF(r), 0, 0.6);
     if (rng.chance(fallP)) fall(r, cause);
   }
 
@@ -319,7 +322,7 @@ export function simulateRace(spec: RaceSpec, now: number): RaceResult {
     arouse(b, 0.15 * impact);
     for (const id of b.quirks) quirkById(id)?.bumped?.(b, a, impact, ctx);
     for (const id of a.quirks) quirkById(id)?.bumped?.(a, b, impact * 0.5, ctx);
-    const sp = 0.16 * impact * going.slip * (1 - b.h.stats.agility / 150);
+    const sp = 0.38 * impact * going.slip * (1 - b.h.stats.agility / 150);
     if (rng.chance(sp)) stumble(b, impact * 0.55, "contatto");
     else if (rng.chance(sp * 0.4)) stumble(a, impact * 0.4, "contatto");
   }
@@ -448,7 +451,7 @@ export function simulateRace(spec: RaceSpec, now: number): RaceResult {
     quirk: revealQuirk,
     hazard: (h) => { hazards.push({ ...h, id: hazardId++ }); },
     ev,
-    chance: (ps) => rng.next() < ps * DT,
+    chance: (ps) => rng.next() < ps * DT * CHAOS,
   };
 
   // setup dei quirk
@@ -456,22 +459,48 @@ export function simulateRace(spec: RaceSpec, now: number): RaceResult {
   for (const r of runners) r.dprime = Math.min(r.dprime, r.dmax);
 
   // ---- sicari ----
-  const pendingHits = spec.hitmen
+  // imprevisti casuali (niente mandante): cani in pista, ombrelli, petardi dal pubblico, olio...
+  const nInc = rng.int(1, 3);
+  const incidents: RaceSpec["hitmen"] = [];
+  for (let k = 0; k < nInc && spec.entries.length; k++) {
+    incidents.push({ id: "imprevisto" + k, service: "inc:" + rng.pick(INCIDENTS).id, targetId: rng.pick(spec.entries).horse.id, byPlayer: "", at: rng.range(0.2, 0.85) });
+  }
+  const pendingHits = [...spec.hitmen, ...incidents]
     .map((hm) => ({ hm, r: runners.find((x) => x.h.id === hm.targetId) }))
     .filter((x) => x.r) as { hm: RaceSpec["hitmen"][number]; r: Runner }[];
 
   function executeHit(hm: RaceSpec["hitmen"][number], target: Runner) {
     const sec = target.e.security ?? 0;
-    const intercept = [0, 0.3, 0.55, 0.75][clamp(sec, 0, 3)];
+    const intercept = hm.byPlayer ? [0, 0.3, 0.55, 0.75][clamp(sec, 0, 3)] : 0;
     const sideD = W + 2.5;
-    hazards.push({ id: hazardId++, kind: "sicario", p: target.p + 12, d: sideD, r: 0.5, t0: t, t1: t + 4, target: target.i });
+    if (hm.byPlayer) hazards.push({ id: hazardId++, kind: "sicario", p: target.p + 12, d: sideD, r: 0.5, t0: t, t1: t + 4, target: target.i });
     if (rng.chance(intercept)) {
       ev({ k: "caught", a: target.i, x: hm.service });
       return;
     }
-    ev({ k: "hitman", a: target.i, x: hm.service });
     const lead = target.v * 1.3 + 4;
-    switch (hm.service) {
+    let service = hm.service;
+    let emoji: string | undefined;
+    if (service.startsWith("inc:")) {
+      const inc = INCIDENT_MAP.get(service.slice(4));
+      if (!inc) return;
+      emoji = inc.emoji;
+      ev({ k: "incident", a: target.i, x: inc.id, q: inc.emoji, it: inc.it, en: inc.en });
+      const m = inc.mech;
+      if (m === "gust") {
+        for (const o of runners) if (onTrack(o) && o.status === "run") { o.vd += 1.2 + rng.next(); addMod(o, { speed: 0.96, dur: 2, label: "raffica" }); stim(o, "botti", 0.3); }
+        return;
+      }
+      if (m === "treat") {
+        addMod(target, { speed: 1.07, accel: 1.3, dur: 4, label: "premio" });
+        target.comfort = Math.max(target.comfort, 0.6);
+        target.arousal *= 0.5;
+        return;
+      }
+      service = { runner: "invasore", obstacle: "buccia", slick: "olio", bang: "petardo", flyer: "drone", rope: "corda", whistle: "fischietto" }[m];
+    } else ev({ k: "hitman", a: target.i, x: hm.service });
+    const hzStart = hazards.length;
+    switch (service) {
       case "buccia": {
         // mira imprecisa: può colpire chiunque
         hazards.push({ id: hazardId++, kind: "buccia", p: target.p + lead, d: clamp(target.d + rng.normal(0, 0.7), 0.4, W - 0.5), r: 0.55, t0: t + 0.4, t1: t + 120 });
@@ -523,6 +552,7 @@ export function simulateRace(spec: RaceSpec, now: number): RaceResult {
         break;
       }
     }
+    for (let k = hzStart; k < hazards.length; k++) if (emoji) hazards[k].emoji = emoji;
   }
 
   function spook(r: Runner, cause: string) {
@@ -965,8 +995,8 @@ export function simulateRace(spec: RaceSpec, now: number): RaceResult {
         if (laneFree(r, nd, true)) r.targetD = nd;
       }
     }
-    // in partenza tutti convergono lentamente verso la corda
-    if (r.p < 250 && !blocked) r.targetD -= DT * 0.25 * r.plan.rail;
+    // in partenza tutti convergono verso la corda: è lì che nascono i contatti
+    if (r.p < 300 && !blocked) r.targetD -= DT * 0.6 * r.plan.rail;
     r.targetD = clamp(r.targetD, 0.5, W - 0.6);
     r.effort = effort;
 
@@ -1066,7 +1096,7 @@ export function simulateRace(spec: RaceSpec, now: number): RaceResult {
           B.d += dir * overlap * (A.mass / mSum);
           const rel = (A.vd - B.vd) * dir; // >0 se si avvicinano
           const impact = overlap * 1.6 + Math.max(0, rel) * 0.6;
-          if (impact > 0.38 && A.bumpCd <= t && B.bumpCd <= t) {
+          if (impact > 0.22 && A.bumpCd <= t && B.bumpCd <= t) {
             A.bumpCd = B.bumpCd = t + 1.2;
             // chi si muoveva verso l'altro è il "colpevole"
             const culprit = Math.abs(A.vd) > Math.abs(B.vd) ? A : B;
@@ -1080,10 +1110,10 @@ export function simulateRace(spec: RaceSpec, now: number): RaceResult {
           const closing = A.v - B.v;
           if (closing > 0) {
             A.v = Math.min(A.v, B.v + 0.1);
-            if (closing > 0.7 && A.bumpCd <= t) {
+            if (closing > 0.4 && A.bumpCd <= t) {
               A.bumpCd = t + 1.5;
               stim(A, "contatto", 0.6);
-              if (rng.chance(0.3 * closing * going.slip)) stumble(A, 0.45, "ha toccato i posteriori di " + B.h.name);
+              if (rng.chance(0.5 * closing * going.slip)) stumble(A, 0.5, "ha toccato i posteriori di " + B.h.name);
             }
           }
         }

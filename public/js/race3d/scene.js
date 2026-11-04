@@ -533,6 +533,22 @@ export class RaceScene {
     if (!m) {
       m = makeHazardMesh(hz, this.venue);
       if (!m) return;
+      if (hz.emoji && hz.kind !== "petardo" && hz.kind !== "laser") {
+        // l'imprevisto si vede: emoji grande sopra l'oggetto
+        const cv = document.createElement("canvas");
+        cv.width = cv.height = 128;
+        const g = cv.getContext("2d");
+        g.font = "100px sans-serif";
+        g.textAlign = "center";
+        g.textBaseline = "middle";
+        g.fillText(hz.emoji, 64, 70);
+        const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), transparent: true }));
+        const big = hz.kind === "invasore" || hz.kind === "drone";
+        sp.scale.set(big ? 2.4 : 1.6, big ? 2.4 : 1.6, 1);
+        sp.position.y = hz.kind === "drone" ? 0.6 : big ? 1.2 : 0.8;
+        if (hz.kind === "invasore") m.children.forEach((c) => (c.visible = false));
+        m.add(sp);
+      }
       this.hazardMeshes.set(hz.id, m);
       this.scene.add(m);
     }
@@ -580,6 +596,33 @@ export class RaceScene {
     this.shot.until = 0;
   }
 
+  /** Emoji che compare sopra un cavallo (stile manga). */
+  pop(i, emoji, dur = 2.2) {
+    const hm = this.horses[i];
+    if (!hm) return;
+    const cv = document.createElement("canvas");
+    cv.width = cv.height = 128;
+    const g = cv.getContext("2d");
+    g.fillStyle = "#fff";
+    g.strokeStyle = "#1b1a3a";
+    g.lineWidth = 8;
+    g.beginPath();
+    g.arc(64, 60, 50, 0, 7);
+    g.fill();
+    g.stroke();
+    g.font = "64px sans-serif";
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.fillText(emoji, 64, 64);
+    const tex = new THREE.CanvasTexture(cv);
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true }));
+    sp.scale.set(1.8, 1.8, 1);
+    sp.position.set(0, 4.2, 0);
+    sp.renderOrder = 999;
+    hm.root.add(sp);
+    (this.pops ??= []).push({ sp, until: this.time + dur, born: this.time, hm });
+  }
+
   /** Il commento segnala eventi interessanti: la regia può fare un primo piano. */
   focusEvent(i, t, dur = 3.2) {
     if (this.mode !== "tv") return;
@@ -593,7 +636,7 @@ export class RaceScene {
     if (t < 0) return { kind: "gate", until: 0 };
     if (rem < 170 || leader.status === 6) return { kind: "finish", until: t + 999 };
     if (rem < 420 && !isCurve(this.venue, this.rep.startS + leader.p)) return { kind: Math.random() < 0.5 ? "headon" : "side", until: t + 6 };
-    const opts = ["side", "side", "heli", "rail", "chase", "side"];
+    const opts = ["side", "side", "chase", "rail", "chase", "side", "heli"];
     return { kind: opts[Math.floor(Math.random() * opts.length)], until: t + 5 + Math.random() * 4 };
   }
 
@@ -633,7 +676,7 @@ export class RaceScene {
         break;
       }
       case "heli": {
-        P.copy(sp(packP - 45, packD + 8, 34));
+        P.copy(sp(packP - 24, packD + 6, 16));
         Lk.copy(sp(packP + 10, packD, 0));
         break;
       }
@@ -735,6 +778,16 @@ export class RaceScene {
       this.crowd.instanceMatrix.needsUpdate = true;
     }
     if (this.spinners) for (const s of this.spinners) s.rotation.z += dt * 0.8;
+    if (this.pops) {
+      this.pops = this.pops.filter((p) => {
+        const age = this.time - p.born;
+        p.sp.position.y = 4.2 + Math.min(1, age * 3) * 0.6 + Math.sin(age * 8) * 0.08;
+        const k = Math.min(1, age * 6);
+        p.sp.scale.set(1.8 * k, 1.8 * k, 1);
+        if (this.time > p.until) { p.hm.root.remove(p.sp); p.sp.material.map.dispose(); p.sp.material.dispose(); return false; }
+        return true;
+      });
+    }
     if (this.particles) {
       const pos = this.particles.geometry.attributes.position;
       const sp = this.particles.userData.speed;

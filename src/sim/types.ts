@@ -123,6 +123,8 @@ export interface RaceEvent {
   q?: string; // id quirk
   x?: string; // testo
   v?: number; // valore
+  it?: string; // testo per la telecronaca
+  en?: string;
 }
 
 export interface Hazard {
@@ -136,6 +138,7 @@ export interface Hazard {
   vd?: number; // per l'invasore (attraversa)
   owner?: number; // corridore caduto
   target?: number;
+  emoji?: string;
 }
 
 /** API che la simulazione offre ai quirk. */
