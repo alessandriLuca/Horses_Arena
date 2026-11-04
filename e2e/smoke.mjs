@@ -1,0 +1,46 @@
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const { chromium } = require("playwright");
+const base = process.argv[2] ?? "http://127.0.0.1:8787";
+const out = "e2e/shots";
+const browser = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
+const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, locale: "it-IT" });
+const page = await ctx.newPage();
+const errs = [];
+page.on("console", (m) => { if (m.type() === "error") errs.push(m.text()); });
+page.on("pageerror", (e) => errs.push("PAGE " + e.message));
+const shot = (n) => page.screenshot({ path: `${out}/ui_${n}.png`, fullPage: false });
+await page.goto(base + "/");
+await page.waitForSelector("#rName");
+await shot("01_welcome");
+await page.fill("#rName", "Luca");
+await page.fill("#rStable", "Scuderia Sakura " + Math.floor(Math.random() * 1000));
+await page.click("#reg");
+await page.waitForSelector(".hero h1");
+await page.waitForTimeout(800);
+await shot("02_home");
+await page.goto(base + "/mercato");
+await page.waitForSelector("[data-buy]");
+await shot("03_market");
+await page.click("[data-buy]");
+await page.click("[data-ok]");
+await page.waitForURL(/cavallo/);
+await page.waitForSelector(".portrait.big");
+await page.waitForTimeout(500);
+await shot("04_horse");
+await page.evaluate(() => window.scrollTo(0, 900));
+await shot("05_horse2");
+for (const p of ["/corse", "/campionato", "/bacheca", "/clinica", "/mercato-nero", "/laboratorio", "/altro", "/tornei", "/sfide", "/classifiche", "/bar", "/profilo", "/scuderia", "/riproduzione", "/guida"]) {
+  await page.goto(base + p);
+  await page.waitForTimeout(900);
+  await shot("p" + p.replace(/\//g, "_"));
+}
+// corsa: apri la prima e iscrivi
+await page.goto(base + "/corse");
+await page.waitForSelector(".race-row");
+await page.click(".race-row");
+await page.waitForSelector(".hero");
+await page.waitForTimeout(600);
+await shot("06_race");
+console.log("errors:", errs.slice(0, 20));
+await browser.close();

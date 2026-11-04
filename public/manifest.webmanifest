@@ -1,0 +1,9 @@
+{
+  "name": "Horses Arena",
+  "short_name": "Horses Arena",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#c9ecff",
+  "theme_color": "#ff8fc8",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

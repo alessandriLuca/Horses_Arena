@@ -1,0 +1,14 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<script type="importmap">{"imports":{"three":"/vendor/three/three.module.js"}}</script>
+<link rel="stylesheet" href="/css/style.css"><title>dev</title></head>
+<body style="margin:0;background:#000"><div id="v" style="position:fixed;inset:0"></div><div id="nonna"></div>
+<script type="module">
+import { openViewer } from "/js/race3d/viewer.js";
+import { initNonna } from "/js/nonna.js";
+initNonna(document.getElementById("nonna"));
+const rep = await (await fetch("/dev-replay.json")).json();
+const q = new URLSearchParams(location.search);
+window.viewer = openViewer(document.getElementById("v"), { replay: rep, info: { name: "Gran Premio di Prova", startAt: 0 }, live: false, myOwner: "me" });
+if (q.get("t")) { /* salto */ }
+window.ready = true;
+</script></body></html>

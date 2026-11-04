@@ -1,0 +1,5 @@
+node_modules
+.wrangler
+e2e/shots
+.dev.vars
+public/dev-replay.json
