@@ -5,6 +5,7 @@ import { nonnaSay, nonnaSvg, nonnaSilence, pickVoice } from "../nonna.js";
 import { settings, saveSettings } from "../settings.js";
 import { refreshTutorial, tutorialChecklist, restartTutorial } from "../tutorial.js";
 import { initAssistant } from "../assistant.js";
+import { menuGrid } from "../menu.js";
 
 const PATTERNS = ["tinta", "strisce", "bande", "stella", "croce", "pois", "diagonale", "quarti"];
 
@@ -103,6 +104,7 @@ export async function home(view) {
     </div>
   </section>
   ${tutorialChecklist()}
+  ${gazzetta(st, me)}
   ${live.length ? `<div class="card pink"><h3>🔴 ${t("In diretta adesso")}</h3>${live.map((r) => `<div class="race-row live" data-go="/corsa/${r.id}?watch=1"><div class="time">${timeHM(r.start_at)}</div><div><div class="nm">${esc(r.name)}</div><div class="meta"><span class="badge-live">LIVE</span></div></div><span class="btn small primary">▶ ${t("Guarda")}</span></div>`).join("")}</div>` : ""}
   <div class="grid">
     <div class="card blue">
@@ -129,6 +131,7 @@ export async function home(view) {
       <a href="/corse">${t("Calendario completo")} →</a>
     </div>
   </div>
+  <div class="card"><h3>☰ ${t("Tutto il gioco")}</h3>${menuGrid()}</div>
   <p class="muted" style="text-align:center">👥 ${st.players} ${t("scuderie")} · 🟢 ${st.online} ${t("online")}</p>`;
   if (!sessionStorage.getItem("ha_greeted")) {
     sessionStorage.setItem("ha_greeted", "1");
@@ -268,3 +271,32 @@ export async function guide(view) {
 }
 
 export { onWsMessage, setCleanup, h };
+
+// =============================================================== la gazzetta (notizie demenziali)
+const NEWS = [
+  "{h} sorpreso a mangiare la pizza del vicino di box. Il vicino: \"Era una margherita, la mia preferita\".",
+  "{h} chiede di correre con le scarpe da ginnastica. La federazione: \"Ci pensiamo\".",
+  "Scandalo: {h} ha un profilo su un'app di incontri. Cerca \"una cavalla seria, niente perditempo\".",
+  "{h} ha imparato a contare fino a tre. Poi si è stancato.",
+  "Il fantino di {h} giura: \"Di notte parla in dialetto napoletano\".",
+  "{h} rifiuta di correre il lunedì: \"È contro la mia religione\".",
+  "Avvistato {h} al supermercato con un carrello pieno di carote. Faceva la fila alla cassa veloce.",
+  "{h} ha scritto un libro di poesie. Titolo: \"Fieno\". Venduto in 3 copie, tutte a sua madre.",
+  "UFO sopra l'ippodromo: gli alieni chiedono l'autografo a {h}.",
+  "{h} denuncia la scuderia: \"Il box non ha il wi-fi\".",
+  "Nonna Pina rivela: \"{h} da piccolo voleva fare il ballerino classico\".",
+  "{h} si iscrive a Masterchef con la ricetta della biada alla carbonara.",
+  "Il veterinario: \"{h} sta benissimo, ma si crede un unicorno\".",
+  "{h} perde una scommessa e deve correre con un tutù rosa per una settimana.",
+  "Il cinghiale che ha invaso la pista ieri chiede di essere iscritto al campionato.",
+  "Sondaggio: il 73% dei cavalli preferisce la musica neomelodica. Il restante 27% è sordo.",
+  "Furto all'ippodromo: rubate 400 zollette di zucchero. Sospettato principale: {h}.",
+  "{h} si rifiuta di fare la foto del traguardo: \"Non è il mio profilo migliore\".",
+];
+function gazzetta(st, me) {
+  const names = [...(me.horses ?? []).filter((x) => !x.dead).map((x) => x.name), ...(st.upcoming ?? []).map(() => null)].filter(Boolean);
+  const pool = names.length ? names : ["Polpetta Furiosa", "Zio Tonino", "Baronessa del Vesuvio"];
+  const day = Math.floor(Date.now() / 3600000);
+  const pick = (k) => NEWS[(day * 7 + k * 13) % NEWS.length].replace("{h}", pool[(day + k) % pool.length]);
+  return `<div class="card gazzetta"><h3>📰 La Gazzetta dell'Ippodromo</h3><ul style="padding-left:18px;margin:0">${[0, 1, 2].map((k) => `<li>${esc(pick(k))}</li>`).join("")}</ul></div>`;
+}

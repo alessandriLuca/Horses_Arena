@@ -6,6 +6,7 @@ import { initTutorial, refreshTutorial, tutorialSeen } from "./tutorial.js";
 import { coin, click } from "./audio.js";
 import * as S from "./screens/index.js";
 import { initAssistant } from "./assistant.js";
+import { openMenu } from "./menu.js";
 
 export const state = {
   token: null,
@@ -173,11 +174,13 @@ export function renderTop() {
     bell.classList.add("hidden");
     nav.classList.add("hidden");
     $("#mailBtn").classList.add("hidden");
+    $("#menuBtn").classList.add("hidden");
     return;
   }
   m.classList.remove("hidden");
   bell.classList.remove("hidden");
   $("#mailBtn").classList.remove("hidden");
+  $("#menuBtn").classList.remove("hidden");
   const md = $("#mailDot");
   md.textContent = String(me.mailUnread ?? 0);
   md.classList.toggle("hidden", !me.mailUnread);
@@ -192,7 +195,7 @@ export function renderTop() {
   dot.classList.toggle("hidden", unseen === 0);
   for (const a of $$("#nav a")) {
     const lb = a.querySelector(".lb");
-    lb.textContent = t({ home: "Home", scuderia: "Scuderia", corse: "Corse", mercato: "Mercato", altro: "Altro" }[a.dataset.nav]);
+    lb.textContent = t({ home: "Home", scuderia: "Scuderia", corse: "Corse", mercato: "Mercato", altro: "Menu" }[a.dataset.nav]);
   }
 }
 
@@ -351,6 +354,7 @@ async function boot() {
   initNonna($("#nonna"));
   $("#bell").onclick = () => go("/notifiche");
   $("#mailBtn").onclick = () => go("/posta");
+  $("#menuBtn").onclick = () => openMenu();
   try {
     await catalog();
   } catch {

@@ -7,24 +7,8 @@ import { raceRow, friendlyModal } from "./races.js";
 
 // =============================================================== menu "Altro"
 export async function more(view) {
-  const tiles = [
-    ["/campionato", "🏆", "Campionato", "4 divisioni, promozioni e retrocessioni"],
-    ["/tornei", "🏟️", "Tornei", "Crea tornei privati con amici e bot"],
-    ["/sfide", "⚔️", "Sfide e amichevoli", "Sfida le altre scuderie"],
-    ["/bacheca", "📋", "Bacheca ingaggi", "Oltre 100 modi di fare soldi"],
-    ["/clinica", "🏥", "Clinica e assicurazioni", "Malattie, cure, polizze, sorveglianza"],
-    ["/laboratorio", "🧪", "Laboratorio", "Sperimentazioni a pagamento"],
-    ["/mercato-nero", "🕶️", "Mercato nero", "Sicari, doping, detective e polizia"],
-    ["/riproduzione", "🍼", "Riproduzione", "Stalloni e puledri"],
-    ["/classifiche", "📊", "Classifiche", "I migliori del mondo"],
-    ["/bar", "💬", "Il Bar", "Chat dell'ippodromo"],
-    ["/posta", "✉️", "Posta", "Lettere, soldi, cavalli e richieste"],
-    ["/guida", "📖", "Guida", "Come funziona tutto"],
-    ["/profilo", "⚙️", "Profilo e lingua", "Colori, voce, codice di recupero"],
-  ];
-  view.innerHTML = `<h2 class="title-pop">✨ ${t("Altro")}</h2><div class="grid tight">${tiles
-    .map(([href, ic, ti, d]) => `<a class="card" href="${href}" style="text-decoration:none;color:inherit;margin:0"><div style="font-size:30px">${ic}</div><b>${t(ti)}</b><div class="muted" style="font-size:12.5px;font-weight:700">${t(d)}</div></a>`)
-    .join("")}</div>`;
+  const { menuGrid } = await import("../menu.js");
+  view.innerHTML = `<h2 class="title-pop">☰ ${t("Menu")}</h2>${menuGrid()}`;
 }
 
 // =============================================================== campionato

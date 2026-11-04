@@ -23,11 +23,15 @@ const SOLO = [
   "Cicerone", "Garibaldi", "Caravaggio", "Petrarca", "Masaniello", "Pulcinella", "Arlecchino", "Brighella", "Pantalone", "Balanzone",
   "Bufalo Bill", "Ronzinante", "Furia Cieca", "Mille Lire", "Ultimo Treno", "Ritorno di Fiamma", "Colpo di Testa", "Gran Rifiuto", "Tutto o Niente", "Fino in Fondo",
   "Mai Domo", "Sempre Avanti", "Senza Freni", "Chi Va Piano", "Mezzo Matto", "Quasi Primo", "Fiato Lungo", "Piede Svelto", "Coda Lunga", "Muso Duro",
+  "Pasta e Fagioli", "Lasagna Volante", "Zio Peppino Express", "Nonno Turbo", "Ma Che Ne So", "Boh Forse Domani", "Cavallo Pazzo Ma Simpatico", "Pecora Travestita",
+  "Il Signor Zoccoletti", "Frittata di Cipolle", "Ragù della Domenica", "Mozzarella Furiosa", "Ciabatta Rapida", "Gnocco Fritto Turbo", "Cotoletta al Galoppo",
+  "Biscotto Inzuppato", "Dottor Criniera", "Avvocato del Diavolo", "Ultimo Ma Contento", "Non Ci Credo Nemmeno Io", "Speriamo Bene", "Tanto Vince Lui",
+  "Mutanda Volante", "Ciccio Bello", "Peto di Velluto", "Zampa di Velluto Usata", "Ascensore Rotto", "Wi-Fi Libero", "Lunedì Mattina", "Cugino di Nessuno",
 ];
 
 export function horseName(rng: Rng): string {
   const r = rng.next();
-  if (r < 0.22) return rng.pick(SOLO);
+  if (r < 0.4) return rng.pick(SOLO);
   return `${rng.pick(FIRST)} ${rng.pick(SECOND)}`;
 }
 
