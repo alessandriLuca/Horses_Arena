@@ -33,6 +33,8 @@ export function openViewer(root, opts) {
   hud.appendChild(toastBox);
   const bar = el("div", "vh-controls");
   hud.appendChild(bar);
+  const callouts = el("div", "vh-callouts");
+  hud.appendChild(callouts);
   const results = el("div", "vh-results hidden");
   hud.appendChild(results);
 
@@ -129,6 +131,17 @@ export function openViewer(root, opts) {
   }
 
   let lastOrder = replay.horses.map((_, i) => i);
+  let slowUntil = -99;
+  let lastCallout = -99;
+  function callout(text, cls = "", force = false) {
+    const now = performance.now();
+    if (!force && now - lastCallout < 900) return;
+    lastCallout = now;
+    const d = el("div", "vh-callout " + cls, text);
+    callouts.appendChild(d);
+    setTimeout(() => d.remove(), 1900);
+  }
+  const POP = { fall: "☠️", stumble: "❗", bump: "💢", spook: "😱", rear: "😱", stop: "❓", quirk: "🌀", refuse: "🙅", hurdle_fall: "☠️", hazard: "⚠️", riderless: "🏳️", disobey: "😤", exhausted: "😵", leap: "🦘", avoid: "😎" };
   let boardT = 0;
 
   function frame(now) {
@@ -136,7 +149,8 @@ export function openViewer(root, opts) {
     raf = requestAnimationFrame(frame);
     const dt = Math.min(0.1, (now - lastFrame) / 1000);
     lastFrame = now;
-    if (!paused) raceT += dt * (live ? 1 : speed);
+    const slow = !live && raceT < slowUntil ? 0.35 : 1;
+    if (!paused) raceT += dt * (live ? 1 : speed) * slow;
     if (live) {
       const target = (Date.now() + offset - startAt) / 1000;
       if (Math.abs(target - raceT) > 2) raceT = target;
@@ -150,7 +164,17 @@ export function openViewer(root, opts) {
     for (const e of replay.events) {
       if (e.t > tt || e.t < tt - 0.3 || firedFx.has(e)) continue;
       firedFx.add(e);
-      if (e.k === "hitman" && e.x === "petardo") bang();
+      if ((e.k === "hitman" || e.k === "incident") && e.x === "petardo") bang();
+      const nm = e.a !== undefined ? replay.horses[e.a]?.name ?? "" : "";
+      if (e.a !== undefined && POP[e.k] && (e.k !== "bump" || (e.v ?? 0) > 0.3)) scene.pop(e.a, POP[e.k]);
+      if (e.k === "fall" || e.k === "hurdle_fall") { callout(`☠️ ${t("CADUTO!")} ${nm}`, "red", true); slowUntil = tt + 2.2; }
+      else if (e.k === "hitman") { callout(`🕶️ ${t("SICARIO!")}`, "dark", true); slowUntil = tt + 2.5; }
+      else if (e.k === "incident") { callout(`${e.q ?? "⚠️"} ${t("IMPREVISTO!")}`, "dark", true); slowUntil = tt + 2; if (e.a !== undefined) scene.pop(e.a, e.q ?? "⚠️", 3); }
+      else if (e.k === "quirk") callout(`🌀 ${quirkName?.(e.q) ?? e.q}!`, "purple");
+      else if (e.k === "bump" && (e.v ?? 0) > 0.45) callout(`💥 ${t("SCONTRO!")}`, "");
+      else if (e.k === "refuse") callout(`🙅 ${t("RIFIUTO!")} ${nm}`, "");
+      else if (e.k === "riderless") callout(`🏳️ ${t("SENZA FANTINO!")}`, "red");
+      else if (e.k === "photo") callout(`📸 ${t("FOTOFINISH!")}`, "gold", true);
       if (e.k === "quirk" && /urlo|nitrito|urla/.test(e.x ?? "")) neigh();
       if (e.k === "finish" && e.v === 1) cheer();
     }

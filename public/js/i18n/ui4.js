@@ -1,5 +1,6 @@
 export default {
   "Invita una scuderia NPC": ["Invite an NPC stable", "NPC-Stall einladen", "Пригласить конюшню-NPC", "NPC厩舎を招待", "邀请NPC马厩"],
+  "CADUTO!": ["DOWN!", "GESTÜRZT!", "ПАДЕНИЕ!", "落馬！", "摔倒！"], "SICARIO!": ["HITMAN!", "KILLER!", "КИЛЛЕР!", "殺し屋！", "杀手！"], "IMPREVISTO!": ["INCIDENT!", "ZWISCHENFALL!", "ПРОИСШЕСТВИЕ!", "ハプニング！", "意外！"], "SCONTRO!": ["CRASH!", "ZUSAMMENSTOSS!", "СТОЛКНОВЕНИЕ!", "激突！", "相撞！"], "RIFIUTO!": ["REFUSAL!", "VERWEIGERT!", "ОТКАЗ!", "拒否！", "拒跳！"], "SENZA FANTINO!": ["RIDERLESS!", "OHNE JOCKEY!", "БЕЗ ЖОКЕЯ!", "騎手なし！", "无骑师！"], "FOTOFINISH!": ["PHOTO FINISH!", "FOTOFINISH!", "ФОТОФИНИШ!", "写真判定！", "照片判定！"],
   // menu "Altro"
   "Sfide e amichevoli": ["Challenges & friendlies", "Duelle & Freundschaftsrennen", "Вызовы и товарищеские", "挑戦と練習試合", "挑战与友谊赛"],
   "4 divisioni, promozioni e retrocessioni": ["4 divisions, promotion and relegation", "4 Ligen, Auf- und Abstieg", "4 дивизиона, повышение и вылет", "4部制、昇格と降格", "4个级别，升降级"],

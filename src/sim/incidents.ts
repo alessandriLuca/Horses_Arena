@@ -1,0 +1,127 @@
+// Oltre 100 imprevisti esterni che possono capitare durante una corsa.
+// mech = effetto fisico: runner (attraversa la pista), obstacle (oggetto a terra, fa inciampare),
+// slick (chiazza scivolosa), bang (rumore che spaventa), flyer (vola sopra il gruppo), rope (blocca un tratto),
+// gust (raffica laterale), treat (premio: il cavallo accelera), whistle (spavento mirato).
+export type Mech = "runner" | "obstacle" | "slick" | "bang" | "flyer" | "rope" | "gust" | "treat" | "whistle";
+
+export interface Incident {
+  id: string;
+  emoji: string;
+  mech: Mech;
+  it: string; // frase della telecronaca (italiano)
+  en: string;
+}
+
+const I = (id: string, emoji: string, mech: Mech, it: string, en: string): Incident => ({ id, emoji, mech, it, en });
+
+export const INCIDENTS: Incident[] = [
+  // animali che attraversano
+  I("cane", "🐕", "runner", "Un cane è scappato al padrone e attraversa la pista!", "A dog escaped its owner and runs across the track!"),
+  I("gatto", "🐈", "runner", "Un gatto nero attraversa la pista! Porta male, toccate ferro!", "A black cat crosses the track! Bad luck!"),
+  I("gallina", "🐔", "runner", "Una gallina in pista! Da dove è uscita?!", "A chicken on the track! Where did it come from?!"),
+  I("papere", "🦆", "runner", "Una fila di paperelle attraversa la pista con la mamma!", "A line of ducklings crosses the track with mum!"),
+  I("cinghiale", "🐗", "runner", "Un cinghiale! C'è un cinghiale in pista, come a Roma!", "A wild boar on the track!"),
+  I("capra", "🐐", "runner", "Una capra è scappata dalla fattoria didattica!", "A goat escaped from the petting farm!"),
+  I("pecore", "🐑", "runner", "Un gregge di pecore! Fermate le pecore!", "A flock of sheep! Stop the sheep!"),
+  I("mucca", "🐄", "runner", "Una mucca in pista. Calma e gesso, è solo una mucca.", "A cow on the track. Stay calm, it's just a cow."),
+  I("maiale", "🐖", "runner", "Un maialino in pista! Il pranzo di Natale è scappato!", "A piglet on the track! Christmas lunch escaped!"),
+  I("tartaruga", "🐢", "obstacle", "Una tartaruga attraversa la pista... con calma.", "A tortoise crosses the track... very slowly."),
+  I("riccio", "🦔", "obstacle", "Un riccio si è appallottolato in mezzo alla pista!", "A hedgehog curled up in the middle of the track!"),
+  I("coniglio", "🐇", "runner", "Un coniglio sfreccia tra le zampe dei cavalli!", "A rabbit darts between the horses' legs!"),
+  I("volpe", "🦊", "runner", "Una volpe! Ha rubato un panino in tribuna e scappa!", "A fox! It stole a sandwich and runs away!"),
+  I("struzzo", "🦤", "runner", "Uno struzzo?! Ma chi ha portato uno struzzo?", "An ostrich?! Who brought an ostrich?"),
+  I("lama", "🦙", "runner", "Un lama in pista! Speriamo che non sputi!", "A llama on the track! Hope it doesn't spit!"),
+  I("pavone", "🦚", "runner", "Un pavone fa la ruota in mezzo alla pista!", "A peacock shows off in the middle of the track!"),
+  I("asino", "🫏", "runner", "Un asino vuole partecipare alla corsa. Iscritto fuori tempo massimo!", "A donkey wants to join the race!"),
+  I("bambino_pony", "🐴", "runner", "Un pony della scuola di equitazione è scappato in pista!", "A pony from the riding school escaped onto the track!"),
+  I("piccioni", "🐦", "flyer", "Uno stormo di piccioni si alza in volo davanti ai cavalli!", "A flock of pigeons takes off in front of the horses!"),
+  I("gabbiani", "🕊️", "flyer", "I gabbiani attaccano! Cercano le patatine del pubblico!", "Seagulls attack! They want the crowd's chips!"),
+  I("api", "🐝", "flyer", "Uno sciame d'api! Si salvi chi può!", "A swarm of bees! Run for your lives!"),
+  I("farfalle", "🦋", "flyer", "Una nuvola di farfalle colorate: che spettacolo... e che distrazione!", "A cloud of butterflies: beautiful... and distracting!"),
+  I("pipistrello", "🦇", "flyer", "Un pipistrello sbuca dalle tribune!", "A bat comes out of the stands!"),
+  I("aquila", "🦅", "flyer", "Un'aquila plana bassissima sulla pista!", "An eagle swoops low over the track!"),
+  I("corvo", "🐦‍⬛", "flyer", "Un corvo gracchia sulla testa del gruppo. Brutto segno!", "A crow caws over the pack. Bad omen!"),
+  I("zanzare", "🦟", "flyer", "Zanzare tigre! I cavalli scalciano!", "Tiger mosquitoes! The horses kick out!"),
+  // persone
+  I("tifoso", "🏃", "runner", "Un tifoso ubriaco invade la pista con la bandiera!", "A drunk fan invades the track with a flag!"),
+  I("nonno", "👴", "runner", "Un nonno ha sbagliato uscita e attraversa la pista col bastone!", "A grandpa took the wrong exit and crosses with his cane!"),
+  I("bambino", "🧒", "runner", "Un bambino rincorre il palloncino in pista! Prendetelo!", "A child chases a balloon onto the track!"),
+  I("selfie", "🤳", "runner", "Un'influencer si fa un selfie in mezzo alla pista!", "An influencer takes a selfie in the middle of the track!"),
+  I("sposi", "👰", "runner", "Una coppia di sposi attraversa la pista per le foto!", "Newlyweds cross the track for photos!"),
+  I("mascotte", "🦄", "runner", "La mascotte dell'ippodromo è inciampata in pista!", "The racecourse mascot tripped onto the track!"),
+  I("giardiniere", "👨‍🌾", "runner", "Il giardiniere non sapeva della corsa! Scappa col tosaerba!", "The gardener didn't know about the race! He flees with the mower!"),
+  I("streaker", "🍑", "runner", "Uno spogliarellista in pista! Coprite gli occhi ai bambini!", "A streaker on the track! Cover the children's eyes!"),
+  I("vigile", "👮", "runner", "Un vigile entra in pista a fare multe! Divieto di sosta!", "A traffic warden walks onto the track to hand out tickets!"),
+  I("fotografo", "📸", "bang", "Un fotografo scatta col flash a raffica!", "A photographer fires his flash nonstop!"),
+  I("venditore", "🍦", "runner", "Il gelataio attraversa la pista col carretto!", "The ice cream man crosses with his cart!"),
+  I("turisti", "🧳", "runner", "Un gruppo di turisti con la guida attraversa la pista!", "A group of tourists with their guide crosses the track!"),
+  I("monaco", "🧘", "obstacle", "Un monaco medita in mezzo alla pista. Impassibile!", "A monk is meditating in the middle of the track!"),
+  I("fantino_perso", "🏇", "runner", "Un fantino di un'altra corsa ha sbagliato pista!", "A jockey from another race is on the wrong track!"),
+  // oggetti
+  I("ombrello", "☂️", "obstacle", "Un ombrello volato dalla tribuna finisce in pista!", "An umbrella flew from the stands onto the track!"),
+  I("cappello", "🎩", "obstacle", "Il cappello di una signora elegante vola in pista!", "A lady's fancy hat flies onto the track!"),
+  I("palloncini", "🎈", "flyer", "Un mazzo di palloncini scappa e vola sulla pista!", "A bunch of balloons floats over the track!"),
+  I("pallone", "⚽", "obstacle", "Un pallone da calcio rotola in pista!", "A football rolls onto the track!"),
+  I("lattina", "🥫", "obstacle", "Qualcuno ha lanciato una lattina! Maleducati!", "Someone threw a can! How rude!"),
+  I("anguria", "🍉", "slick", "Un'anguria spaccata in pista! Scivola tutto!", "A smashed watermelon on the track! Slippery!"),
+  I("pizza", "🍕", "obstacle", "Una pizza è caduta in pista! Che spreco!", "A pizza fell on the track! What a waste!"),
+  I("spaghetti", "🍝", "slick", "Un piatto di spaghetti al pomodoro in pista! Scivolosissimi!", "A plate of spaghetti on the track! Very slippery!"),
+  I("banane", "🍌", "obstacle", "Un carico di banane caduto dal camion del bar!", "A load of bananas fell off the bar's truck!"),
+  I("biglie", "🔮", "slick", "Un sacchetto di biglie si è rotto! Scivolano tutti!", "A bag of marbles burst! Everyone slips!"),
+  I("pneumatico", "🛞", "obstacle", "Una gomma d'auto rotola in pista!", "A car tyre rolls onto the track!"),
+  I("carrello", "🛒", "runner", "Un carrello della spesa senza padrone attraversa la pista!", "An abandoned shopping trolley rolls across the track!"),
+  I("sedia", "🪑", "obstacle", "Una sedia di plastica volata dal bar!", "A plastic chair blew over from the bar!"),
+  I("aquilone", "🪁", "flyer", "Un aquilone impazzito scende sulla pista!", "A runaway kite dives onto the track!"),
+  I("bandiera", "🚩", "obstacle", "Una bandiera dei tifosi è caduta in pista!", "A fan's flag fell onto the track!"),
+  I("coriandoli", "🎊", "bang", "Partono i coriandoli in anticipo! Sorpresa!", "The confetti cannons go off early!"),
+  I("scarpa", "👟", "obstacle", "Una scarpa! Qualcuno ha perso una scarpa in pista!", "A shoe! Someone lost a shoe on the track!"),
+  I("borsa", "👜", "obstacle", "La borsetta della contessa è caduta in pista!", "The countess dropped her handbag on the track!"),
+  I("cartellone", "🪧", "obstacle", "Un cartellone pubblicitario si è staccato col vento!", "An advertising board blew off in the wind!"),
+  I("secchio", "🪣", "slick", "Un secchio d'acqua rovesciato: fango ovunque!", "A spilled bucket of water: mud everywhere!"),
+  I("olio_fritto", "🍟", "slick", "Il friggitore del bar ha rovesciato l'olio!", "The bar's fryer spilled its oil!"),
+  I("sapone", "🫧", "slick", "La macchina delle bolle di sapone impazzisce! Pista schiumosa!", "The bubble machine goes crazy! Foamy track!"),
+  I("tappeto", "🧶", "rope", "Un gomitolo di lana si srotola attraverso la pista!", "A ball of yarn unrolls across the track!"),
+  I("nastro", "🎗️", "rope", "Il nastro dell'inaugurazione è ancora teso!", "The opening ceremony ribbon is still stretched!"),
+  I("tubo", "🚿", "rope", "Il tubo dell'irrigazione attraversa la pista!", "The irrigation hose is lying across the track!"),
+  I("filo_panni", "👕", "rope", "Un filo per stendere con le mutande del custode!", "A washing line with the caretaker's underwear!"),
+  I("rete", "🥅", "rope", "Una rete da pallavolo volata in pista!", "A volleyball net blew onto the track!"),
+  // rumori e luci
+  I("petardo_pubblico", "🧨", "bang", "Un petardo dal pubblico! Che botto!", "A firecracker from the crowd! What a bang!"),
+  I("fuochi", "🎆", "bang", "Partono i fuochi d'artificio per sbaglio!", "Fireworks go off by mistake!"),
+  I("banda", "🎺", "bang", "La banda del paese attacca la marcia a tutto volume!", "The town band starts playing at full blast!"),
+  I("tromba_stadio", "📯", "whistle", "Una trombetta da stadio a un metro dalle orecchie!", "An air horn right next to their ears!"),
+  I("aereo", "✈️", "bang", "Un aereo passa bassissimo sopra l'ippodromo!", "A plane flies very low over the racecourse!"),
+  I("elicottero", "🚁", "flyer", "L'elicottero della TV si abbassa troppo!", "The TV helicopter flies too low!"),
+  I("allarme", "🚨", "bang", "Scatta l'allarme di un'auto nel parcheggio!", "A car alarm goes off in the car park!"),
+  I("campane", "🔔", "bang", "Suonano le campane a festa della chiesa vicina!", "The nearby church bells start ringing!"),
+  I("microfono", "🎤", "whistle", "Il microfono dello speaker fischia!", "The announcer's microphone squeals!"),
+  I("laser_show", "🔦", "flyer", "Parte il laser show della serata in anticipo!", "The evening laser show starts early!"),
+  I("tuono", "⛈️", "bang", "Un tuono improvviso! Il cielo brontola!", "A sudden thunderclap!"),
+  I("fulmine", "⚡", "bang", "Un fulmine cade vicino all'ippodromo!", "Lightning strikes near the racecourse!"),
+  I("specchio", "🪞", "flyer", "Il riflesso di uno specchio acceca i cavalli!", "A mirror's reflection dazzles the horses!"),
+  I("trattore", "🚜", "runner", "Un trattore attraversa la pista per andare nei campi!", "A tractor crosses the track to get to the fields!"),
+  I("moto", "🏍️", "runner", "Un motociclista ha sbagliato strada!", "A motorcyclist took the wrong road!"),
+  I("monopattino", "🛴", "runner", "Un ragazzino sul monopattino elettrico in pista!", "A kid on an e-scooter on the track!"),
+  I("drone_tv", "🛸", "flyer", "Il drone della TV perde il controllo!", "The TV drone loses control!"),
+  I("robot", "🤖", "runner", "Il robot tagliaerba si è acceso da solo!", "The robot lawnmower switched itself on!"),
+  // meteo e natura
+  I("raffica", "🌬️", "gust", "Una raffica di vento fortissima spinge tutti verso l'esterno!", "A huge gust of wind pushes everyone wide!"),
+  I("tromba_aria", "🌪️", "gust", "Una piccola tromba d'aria attraversa l'ippodromo!", "A small whirlwind crosses the racecourse!"),
+  I("grandine", "🧊", "bang", "Grandinata improvvisa! Chicchi grossi come noci!", "Sudden hail! Stones the size of walnuts!"),
+  I("pozzanghera", "💦", "slick", "Una pozzanghera enorme in curva!", "A huge puddle on the bend!"),
+  I("foglie", "🍂", "slick", "Un tappeto di foglie bagnate in pista!", "A carpet of wet leaves on the track!"),
+  I("sole_negli_occhi", "🌞", "flyer", "Il sole basso acceca i cavalli in curva!", "The low sun blinds the horses on the bend!"),
+  I("buca", "🕳️", "obstacle", "Una talpa ha scavato una buca in pista!", "A mole dug a hole in the track!"),
+  I("ramo", "🌿", "obstacle", "Un ramo è caduto in pista col vento!", "A branch fell onto the track in the wind!"),
+  I("neve_tetto", "❄️", "obstacle", "La neve scivola dal tetto della tribuna in pista!", "Snow slides off the stand roof onto the track!"),
+  // sorprese positive
+  I("carota", "🥕", "treat", "Un bambino lancia una carota! Il cavallo la vede e vola!", "A kid throws a carrot! The horse sees it and flies!"),
+  I("zollette", "🍬", "treat", "Qualcuno sventola delle zollette di zucchero oltre il traguardo!", "Someone waves sugar cubes past the finish line!"),
+  I("musica", "🎶", "treat", "Dagli altoparlanti parte la sua canzone preferita! Si carica!", "Its favourite song plays on the speakers! It's pumped!"),
+  I("tifo", "📣", "treat", "La curva intera canta il suo nome! Che carica!", "The whole stand chants its name!"),
+  I("mela", "🍎", "treat", "Una mela rossa rotola davanti a lui: la insegue a tutta velocità!", "A red apple rolls in front of it: it chases it at full speed!"),
+  I("cavalla", "💕", "treat", "Una bellissima cavalla nel recinto accanto lo guarda: accelera per fare il bullo!", "A beautiful mare watches from the paddock: it speeds up to show off!"),
+  I("nonna_pina", "👵", "treat", "Nonna Pina sventola il fazzoletto dalla cabina! Il cavallo si commuove e accelera!", "Grandma Pina waves her hanky from the booth! The horse speeds up!"),
+];
+
+export const INCIDENT_MAP = new Map(INCIDENTS.map((x) => [x.id, x]));
