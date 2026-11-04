@@ -623,6 +623,43 @@ export class RaceScene {
     (this.pops ??= []).push({ sp, until: this.time + dur, born: this.time, hm });
   }
 
+  /**
+   * Effetto ragdoll (solo visivo, sopra la simulazione): kind = fall | bump | stumble | slip | pile.
+   */
+  ragdoll(i, kind, side = 1) {
+    const hm = this.horses[i];
+    if (!hm) return;
+    const r = (a, b) => a + Math.random() * (b - a);
+    if (kind === "fall" || kind === "pile") {
+      hm.rag = { kind, t: 0, y: 0, vy: r(5, 8), fwd: 0, vf: r(3, 6), roll: 0, vroll: side * r(7, 12), pitch: 0, vpitch: r(-5, 8), yaw: 0, vyaw: r(-4, 4) };
+      this.ejectJockey(i);
+    } else if (kind === "slip") {
+      hm.rag = { kind, t: 0, y: 0, vy: 1.5, fwd: 0, vf: 2, roll: 0, vroll: side * 3, pitch: 0, vpitch: 0, yaw: 0, vyaw: side * 16 };
+    } else if (kind === "bump") {
+      hm.wobble = { t: 0, amp: r(0.35, 0.6), dir: side, hop: r(0.4, 1) };
+    } else if (kind === "stumble") {
+      hm.wobble = { t: 0, amp: 0.2, dir: side, hop: 0.3, dive: r(0.5, 0.8) };
+    }
+  }
+
+  /** Il fantino vola via come un pupazzo. */
+  ejectJockey(i) {
+    const hm = this.horses[i];
+    if (!hm || hm.jockeyFlown) return;
+    hm.jockeyFlown = true;
+    const j = createFallenJockey(hm.info.silks);
+    const p = hm.root.position;
+    j.position.set(p.x, 2.4, p.z);
+    this.scene.add(j);
+    const yaw = hm.root.rotation.y;
+    const sp = 7 + Math.random() * 5;
+    (this.flyers ??= []).push({
+      mesh: j, vx: Math.cos(yaw) * sp + (Math.random() - 0.5) * 3, vz: -Math.sin(yaw) * sp + (Math.random() - 0.5) * 3, vy: 6 + Math.random() * 5,
+      spin: new THREE.Vector3(Math.random() * 14 - 7, Math.random() * 14 - 7, Math.random() * 14 - 7), resting: false,
+    });
+    hm.fallenJockey.visible = false;
+  }
+
   /** Gag da cartone animato: spin, flip, bounce, stretch, shake, float, tiny, giant. */
   gag(i, type, dur = 1.4) {
     const hm = this.horses[i];
@@ -780,13 +817,53 @@ export class RaceScene {
           }
         }
       }
+      const rdt = dt * (extra.speed ?? 1);
+      if (hm.rag) {
+        const g = hm.rag;
+        g.t += rdt;
+        g.vy -= 20 * rdt;
+        g.y += g.vy * rdt;
+        if (g.y < 0) { g.y = 0; g.vy = -g.vy * 0.45; g.vroll *= 0.6; g.vpitch *= 0.55; g.vyaw *= 0.6; g.vf *= 0.6; }
+        g.fwd += g.vf * rdt;
+        g.vf *= 1 - rdt * 0.8;
+        g.roll += g.vroll * rdt;
+        g.pitch += g.vpitch * rdt;
+        g.yaw += g.vyaw * rdt;
+        const settle = Math.min(1, Math.max(0, (g.t - 1.6) / 0.8));
+        if (g.kind === "slip") {
+          hm.root.rotation.y += g.yaw;
+          hm.root.position.y += g.y;
+          hm.root.rotation.x = Math.sin(g.t * 9) * 0.25 * Math.max(0, 1 - g.t);
+          if (g.t > 1.3) hm.rag = null;
+        } else {
+          // dopo il volo si "posa" su un fianco
+          const lie = Math.PI / 2 * Math.sign(g.vroll || 1);
+          hm.root.rotation.x = g.roll * (1 - settle) + lie * settle;
+          hm.root.rotation.z = g.pitch * (1 - settle);
+          hm.root.rotation.y += g.yaw * (1 - settle);
+          hm.root.position.y += g.y * (1 - settle) + 0.5 * settle;
+          const tp2 = trackPoint(this.venue, s, st.d);
+          hm.root.position.x += tp2.hx * g.fwd;
+          hm.root.position.z += tp2.hz * g.fwd;
+          if (st.status !== 3 && g.t > 2.6) hm.rag = null; // si è rialzato
+        }
+      }
+      if (hm.wobble) {
+        const w = hm.wobble;
+        w.t += rdt;
+        const e = Math.exp(-3.2 * w.t);
+        hm.root.rotation.x += Math.sin(w.t * 18) * w.amp * e * w.dir;
+        hm.root.position.y += Math.max(0, Math.sin(w.t * 9)) * w.hop * e;
+        if (w.dive) hm.root.rotation.z -= w.dive * Math.sin(Math.min(1, w.t * 3) * Math.PI) * e;
+        if (w.t > 1.5) hm.wobble = null;
+      }
       // fantino a terra
-      if (st.riderless && !hm.fallenJockey.visible) {
+      if (st.riderless && !hm.fallenJockey.visible && !hm.jockeyFlown) {
         const fp = trackPoint(this.venue, s, Math.min(this.venue.width - 1, st.d + 1.2));
         hm.fallenJockey.position.set(fp.x, 0, fp.z);
         hm.fallenJockey.visible = true;
       }
-      if (!st.riderless) hm.fallenJockey.visible = false;
+      if (!st.riderless && !hm.jockeyFlown) hm.fallenJockey.visible = false;
     });
     for (const hz of this.rep.hazards) this.hazardAt(hz, tt);
     this.gate.visible = t < 6;
@@ -806,6 +883,26 @@ export class RaceScene {
       this.crowd.instanceMatrix.needsUpdate = true;
     }
     if (this.spinners) for (const s of this.spinners) s.rotation.z += dt * 0.8;
+    if (this.flyers) {
+      const fdt = dt * (extra.speed ?? 1);
+      for (const f of this.flyers) {
+        if (f.resting) continue;
+        f.vy -= 20 * fdt;
+        f.mesh.position.x += f.vx * fdt;
+        f.mesh.position.y += f.vy * fdt;
+        f.mesh.position.z += f.vz * fdt;
+        f.mesh.rotation.x += f.spin.x * fdt;
+        f.mesh.rotation.y += f.spin.y * fdt;
+        f.mesh.rotation.z += f.spin.z * fdt;
+        if (f.mesh.position.y < 0.15) {
+          f.mesh.position.y = 0.15;
+          f.vy = -f.vy * 0.4;
+          f.vx *= 0.55; f.vz *= 0.55;
+          f.spin.multiplyScalar(0.5);
+          if (Math.abs(f.vy) < 1.2) { f.resting = true; f.mesh.rotation.set(0, f.mesh.rotation.y, 0); }
+        }
+      }
+    }
     if (this.pops) {
       this.pops = this.pops.filter((p) => {
         const age = this.time - p.born;
