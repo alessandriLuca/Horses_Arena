@@ -167,6 +167,18 @@ export function openViewer(root, opts) {
       if ((e.k === "hitman" || e.k === "incident") && e.x === "petardo") bang();
       const nm = e.a !== undefined ? replay.horses[e.a]?.name ?? "" : "";
       if (e.a !== undefined && POP[e.k] && (e.k !== "bump" || (e.v ?? 0) > 0.3)) scene.pop(e.a, POP[e.k]);
+      const GAGQ = { giravolta: "spin", retromarcia: "shake", saltellatore: "bounce", giraffa: "stretch", collo_lungo: "stretch", impennata: "flip", gas_propulsore: "bounce", elettrico: "shake", esplosivo: "stretch", passo_danza: "spin", ballerino: "spin", urlatore: "giant", nitrito_guerra: "giant", pisolino: "squash", starnutone: "shake", ostacoli_immaginari: "flip", carica_toro: "giant", esultanza: "flip", fantasma: "tiny", capobranco: "giant", canguro: "bounce", saltatore_nato: "flip" };
+      if (e.a !== undefined) {
+        if (e.k === "quirk") scene.gag(e.a, GAGQ[e.q] ?? ["spin", "bounce", "stretch", "shake"][Math.floor(Math.random() * 4)], 1.5);
+        else if (e.k === "fall" || e.k === "hurdle_fall") { scene.gag(e.a, "flip", 1.2); scene.pop(e.a, "💫", 3); }
+        else if (e.k === "bump" && (e.v ?? 0) > 0.3) { scene.gag(e.a, "squash", 0.6); if (e.b !== undefined) scene.gag(e.b, "shake", 0.8); }
+        else if (e.k === "stumble") scene.gag(e.a, "shake", 0.7);
+        else if (e.k === "spook" || e.k === "rear") scene.gag(e.a, "bounce", 1.2);
+        else if (e.k === "incident" && (e.x === "ufo" || e.x === "ufo2")) scene.gag(e.a, "float", 2.6);
+        else if (e.k === "incident") scene.gag(e.a, "shake", 1);
+        else if (e.k === "finish" && e.v === 1) setTimeout(() => scene.gag(e.a, "flip", 1.6), 600);
+        else if (e.k === "leap") scene.gag(e.a, "flip", 1);
+      }
       if (e.k === "fall" || e.k === "hurdle_fall") { callout(`☠️ ${t("CADUTO!")} ${nm}`, "red", true); slowUntil = tt + 2.2; }
       else if (e.k === "hitman") { callout(`🕶️ ${t("SICARIO!")}`, "dark", true); slowUntil = tt + 2.5; }
       else if (e.k === "incident") { callout(`${e.q ?? "⚠️"} ${t("IMPREVISTO!")}`, "dark", true); slowUntil = tt + 2; if (e.a !== undefined) scene.pop(e.a, e.q ?? "⚠️", 3); }
