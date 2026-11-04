@@ -1,0 +1,12 @@
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const { chromium } = require("playwright");
+const b = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
+const ctx = await b.newContext({ viewport: { width: 1280, height: 720 }, recordVideo: { dir: "/tmp/claude-0/vid", size: { width: 1280, height: 720 } } });
+const p = await ctx.newPage();
+await p.goto((process.argv[2] ?? "http://127.0.0.1:8787") + "/trailer");
+await p.waitForFunction(() => window.ready);
+await p.waitForTimeout(1500);
+await p.click("#play");
+await p.waitForTimeout(Number(process.argv[3] ?? 82000));
+await ctx.close(); await b.close();

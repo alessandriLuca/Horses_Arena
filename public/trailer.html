@@ -3,80 +3,101 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Horses Arena — Trailer</title>
-<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
 <script type="importmap">{"imports":{"three":"/vendor/three/three.module.js"}}</script>
 <style>
-  html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:"M PLUS Rounded 1c",sans-serif}
-  #stage{position:fixed;inset:0}
-  .cap{position:fixed;left:50%;bottom:9%;transform:translateX(-50%);width:min(900px,92vw);text-align:center;color:#fff;font-size:clamp(20px,3.6vw,38px);font-weight:800;-webkit-text-stroke:1.5px #1b1a3a;paint-order:stroke fill;text-shadow:4px 4px 0 #1b1a3a;opacity:0;transition:opacity .5s}
+  html,body{margin:0;height:100%;background:#000;overflow:hidden}
+  #v{position:fixed;inset:0}
+  .vh-board,.vh-controls,.vh-top,.vh-toasts{display:none!important}
+  .cap{position:fixed;left:50%;bottom:7%;transform:translateX(-50%);width:min(980px,94vw);text-align:center;color:#fff;font-family:"M PLUS Rounded 1c",sans-serif;font-size:clamp(20px,3.4vw,40px);font-weight:900;-webkit-text-stroke:1.6px #1b1a3a;paint-order:stroke fill;text-shadow:4px 4px 0 #1b1a3a;z-index:20;opacity:0;transition:opacity .25s}
   .cap.on{opacity:1}
-  .title{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle,#ff8fc8cc,#6ec6ffcc);opacity:0;transition:opacity .8s;pointer-events:none}
-  .title.on{opacity:1}
-  .title h1{font-family:"Dela Gothic One",sans-serif;font-size:clamp(40px,9vw,110px);margin:0;color:#fff;-webkit-text-stroke:3px #1b1a3a;paint-order:stroke fill;text-shadow:7px 7px 0 #1b1a3a}
-  .title p{font-size:clamp(16px,2.6vw,28px);color:#fff;font-weight:800;text-shadow:2px 2px 0 #1b1a3a}
-  #play{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:linear-gradient(160deg,#6ec6ff,#ff8fc8);z-index:9;cursor:pointer;color:#fff}
-  #play h1{font-family:"Dela Gothic One",sans-serif;font-size:clamp(36px,8vw,90px);margin:0;-webkit-text-stroke:3px #1b1a3a;paint-order:stroke fill;text-shadow:6px 6px 0 #1b1a3a}
-  #play button{font:inherit;font-size:24px;padding:14px 30px;border-radius:16px;border:3px solid #1b1a3a;background:#fff;box-shadow:5px 5px 0 #1b1a3a;cursor:pointer}
-  .lines{position:fixed;inset:-20%;pointer-events:none;opacity:0;transition:opacity .4s;background:repeating-conic-gradient(from 0deg at 50% 50%,transparent 0 2.2deg,rgba(255,255,255,.55) 2.4deg 2.9deg,transparent 3.1deg 7deg);-webkit-mask:radial-gradient(circle,transparent 34%,#000 62%);mask:radial-gradient(circle,transparent 34%,#000 62%)}
+  .card-t{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;opacity:0;pointer-events:none;transition:opacity .25s;
+    background:repeating-conic-gradient(from 0deg at 50% 50%,#ff8fc8 0 10deg,#ffd1e8 10deg 20deg)}
+  .card-t.on{opacity:1}
+  .card-t h1{font-family:"Dela Gothic One",sans-serif;font-size:clamp(34px,8vw,110px);margin:0 4vw;text-align:center;line-height:1.05;color:#fff;-webkit-text-stroke:4px #1b1a3a;paint-order:stroke fill;text-shadow:8px 8px 0 #1b1a3a;transform:rotate(-4deg);animation:wob .4s infinite alternate}
+  .card-t p{font-family:"Dela Gothic One",sans-serif;font-size:clamp(18px,3.4vw,40px);margin:0;color:#ffcc33;-webkit-text-stroke:2px #1b1a3a;paint-order:stroke fill;text-shadow:4px 4px 0 #1b1a3a;transform:rotate(2deg)}
+  @keyframes wob{to{transform:rotate(3deg) scale(1.05)}}
+  .flash{position:fixed;inset:0;background:#fff;z-index:25;opacity:0;pointer-events:none}
+  .flash.go{animation:fl .35s}
+  @keyframes fl{0%{opacity:.9}100%{opacity:0}}
+  #play{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:linear-gradient(160deg,#6ec6ff,#ff8fc8);cursor:pointer}
+  #play h1{font-family:"Dela Gothic One",sans-serif;font-size:clamp(36px,8vw,96px);margin:0;color:#fff;-webkit-text-stroke:3px #1b1a3a;paint-order:stroke fill;text-shadow:6px 6px 0 #1b1a3a}
+  #play button{font:900 24px "M PLUS Rounded 1c",sans-serif;padding:14px 30px;border-radius:16px;border:3px solid #1b1a3a;background:#fff;box-shadow:5px 5px 0 #1b1a3a;cursor:pointer}
+  #play small{color:#1b1a3a;font:800 15px sans-serif}
 </style>
 </head>
 <body>
-<div id="stage"></div><div class="lines" id="lines"></div>
-<div class="title" id="title"><h1>HORSES ARENA</h1><p id="sub"></p></div>
+<div id="v"></div>
+<div class="flash" id="flash"></div>
+<div class="card-t" id="card"><h1 id="cardH"></h1><p id="cardP"></p></div>
 <div class="cap" id="cap"></div>
-<div id="play"><h1>🏇 HORSES ARENA</h1><button>▶ Play the trailer</button><small>turn the sound on</small></div>
+<div id="play"><h1>🏇 HORSES ARENA 🤪</h1><button>▶ PLAY THE TRAILER</button><small>sound ON 🔊 (narration by your browser)</small></div>
 <script type="module">
-import { RaceScene } from "/js/race3d/scene.js";
+import { openViewer } from "/js/race3d/viewer.js";
 const rep = await (await fetch("/trailer-replay.json")).json();
-const scene = new RaceScene(document.getElementById("stage"), rep, {});
-const order = rep.horses.map((_, i) => i);
-let t = -10, last = performance.now(), running = false;
-function frame(now) {
-  requestAnimationFrame(frame);
-  const dt = Math.min(0.1, (now - last) / 1000); last = now;
-  if (running) t += dt * speed;
-  const st = scene.render(t, dt, cur, { excitement: Math.min(1, Math.max(0.2, t / rep.duration)) });
-  cur = order.slice().sort((a, b) => st[b].p - st[a].p);
-  const rem = rep.distance - st[cur[0]].p;
-  document.getElementById("lines").style.opacity = t > 0 && rem < 300 && rem > 0 ? "0.8" : "0";
-}
-let cur = order.slice(), speed = 1;
-requestAnimationFrame(frame);
-const SCRIPT = [
-  { at: 0, title: true, sub: "A dream since university", say: "Ever since university, I have had one dream." },
-  { at: 5, say: "It all started with those crazy Japanese horse racing videos I couldn't stop watching." },
-  { at: 11, say: "I wanted a racecourse where the whole world races together. Every half hour. Live.", go: 0 },
-  { at: 18, say: "Every horse is unique. And every horse learns: from its victories, and from its fears.", cam: "follow" },
-  { at: 25, say: "Over one hundred hidden quirks. Some scream. Some bite. Some just stop to eat the grass.", cam: "tv" },
-  { at: 32, say: "Training. Breeding. Leagues. Tournaments with your friends.", cam: "heli" },
-  { at: 38, say: "Hitmen. Doping. Private detectives. Insurance. And Grandma Pina on commentary.", cam: "tv", speed: 1.6 },
-  { at: 46, say: "No controls in the race. Only you, your stable, and your choices.", cam: "tv" },
-  { at: 53, title: true, sub: "My dream is finally running. Come race with me.", say: "Horses Arena. My dream is finally running. Come race with me!" },
-];
+let qn = {};
+try { qn = Object.fromEntries((await (await fetch("/api/catalog")).json()).quirks.map((q) => [q.id, q.name])); } catch {}
+const viewer = openViewer(document.getElementById("v"), { replay: rep, info: { name: "Gran Premio della Follia", startAt: 0 }, live: false, startT: -8, myOwner: null, quirkName: (q) => (qn[q] ?? q.replace(/_/g, " ")).toUpperCase() });
+window.ready = true;
+
+const ev = rep.events;
+const first = (pred) => ev.find(pred);
+const fallEvs = ev.filter((e) => e.k === "fall");
+const winner = rep.finish.find((f) => f.pos === 1);
+const winIdx = winner ? rep.horses.findIndex((h) => h.num === winner.num) : 0;
+const finishT = (ev.find((e) => e.k === "finish" && e.v === 1) || { t: rep.duration - 4 }).t;
+
+// [tipo, tempo, cavallo, camera, testo narrazione, durata, cartello?]
+const shots = [];
+const add = (e, line, dur = 4.2, cam = "event") => { if (e) shots.push({ t: e.t - 1.2, a: e.a, cam, line, dur }); };
+shots.push({ card: ["SINCE UNIVERSITY", "one dream..."], line: "Ever since university, I had one dream: a horse racing game. Then I lost my mind.", dur: 4.8 });
+shots.push({ t: -3, a: 0, cam: "tv", line: "Welcome to Horses Arena. The most serious horse racing simulator in the world.", dur: 6 });
+add(first((e) => e.k === "quirk" && e.q === "gas_propulsore" && e.t > 8), "This horse had beans for breakfast. Jet propulsion: engaged.");
+add(first((e) => e.k === "quirk" && (e.q === "urlatore" || e.q === "morsicatore") && e.t > 8), "This one screams like an opera singer. The bar just lost every glass.");
+shots.push({ card: ["REAL PHYSICS", "(sort of)"], line: "Real physics!", dur: 1.8 });
+add(fallEvs[0], "Watch the jockey fly! Weeeeee!", 5);
+add(first((e) => e.k === "quirk" && e.q === "retromarcia"), "This one does the moonwalk. In the middle of a race.");
+add(first((e) => e.k === "incident" && e.q === "🛸"), "Aliens. Of course there are aliens.", 5);
+add(first((e) => e.k === "quirk" && (e.q === "calciatore" || e.q === "morsicatore")), "Kung fu kick! Totally legal. Probably.");
+add(first((e) => e.k === "incident" && e.q === "🥪"), "Grandma brought the jockey a sandwich. During the race.", 5);
+add(fallEvs[2] || fallEvs[1], "Pile up! Call the vet! And the priest!", 4.5);
+add(first((e) => e.k === "incident" && e.q === "🦖"), "Is that a dinosaur? Nobody knows. Nobody asks.", 4.5);
+add(first((e) => e.k === "quirk" && e.q === "disarcionatore"), "Bye bye, jockey!");
+shots.push({ card: ["120 CRAZY QUIRKS", "119 absurd incidents"], line: "One hundred and twenty crazy quirks. Over a hundred absurd incidents.", dur: 4.5 });
+shots.push({ card: ["HITMEN · DOPING", "DETECTIVES · GRANDMA"], line: "Hitmen. Doping. Private detectives. Insurance. Horses that learn their fears. And Grandma Pina on commentary.", dur: 6.5 });
+shots.push({ t: finishT - 3, a: winIdx, cam: "tv", line: "And the winner... does a backflip. Because why not.", dur: 6 });
+shots.push({ card: ["HORSES ARENA", "come lose your mind with us"], line: "Horses Arena. My dream since university, inspired by those crazy Japanese horse racing videos. Come lose your mind with us!", dur: 8 });
+
 function voice() {
   const vs = speechSynthesis.getVoices().filter((v) => v.lang && v.lang.startsWith("en"));
-  return vs.find((v) => /google uk|daniel|samantha|female|aria|jenny/i.test(v.name)) || vs[0] || null;
+  return vs.find((v) => /google uk|daniel|samantha|aria|jenny|guy/i.test(v.name)) || vs[0] || null;
 }
-function say(text) {
-  try { const u = new SpeechSynthesisUtterance(text); const v = voice(); if (v) u.voice = v; u.lang = "en-GB"; u.rate = 1.02; u.pitch = 1.05; speechSynthesis.speak(u); } catch {}
+function say(text, excited) {
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); const v = voice(); if (v) u.voice = v; u.lang = "en-GB"; u.rate = excited ? 1.15 : 1.05; u.pitch = excited ? 1.35 : 1.1; speechSynthesis.speak(u); } catch {}
   const c = document.getElementById("cap"); c.textContent = text; c.classList.add("on");
 }
-document.getElementById("play").onclick = () => {
+const flash = () => { const f = document.getElementById("flash"); f.classList.remove("go"); void f.offsetWidth; f.classList.add("go"); };
+
+document.getElementById("play").onclick = async () => {
   document.getElementById("play").remove();
-  const start = performance.now();
-  running = true; t = -10;
-  for (const s of SCRIPT) setTimeout(() => {
-    const ti = document.getElementById("title");
-    ti.classList.toggle("on", !!s.title);
-    if (s.sub) document.getElementById("sub").textContent = s.sub;
-    if (s.go !== undefined) t = s.go;
-    if (s.cam) scene.setMode(s.cam, 2);
-    if (s.speed) speed = s.speed;
-    say(s.say);
-  }, s.at * 1000);
-  void start;
+  for (const s of shots) {
+    flash();
+    const card = document.getElementById("card");
+    if (s.card) {
+      document.getElementById("cardH").textContent = s.card[0];
+      document.getElementById("cardP").textContent = s.card[1];
+      card.classList.add("on");
+    } else {
+      card.classList.remove("on");
+      viewer.seek(s.t);
+      if (s.cam === "event") { viewer.setCam("tv"); viewer.scene.focusEvent(s.a ?? 0, s.t, s.dur + 1.5); }
+      else viewer.setCam(s.cam, s.a ?? 0);
+    }
+    say(s.line, !s.card);
+    await new Promise((r) => setTimeout(r, s.dur * 1000));
+  }
 };
-window.ready = true;
 </script>
 </body>
 </html>
