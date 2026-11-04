@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { DatabaseSync } from "node:sqlite";
 import type { Db } from "../src/game/db";
 import { Game } from "../src/game/world";
