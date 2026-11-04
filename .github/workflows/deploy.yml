@@ -52,6 +52,12 @@ jobs:
           export CLOUDFLARE_API_TOKEN="$(printf '%s' "$RAW_TOKEN" | tr -d '[:space:]')"
           export CLOUDFLARE_ACCOUNT_ID="$(printf '%s' "$RAW_ACCOUNT" | tr -d '[:space:]')"
           echo "Lunghezza Account ID: ${#CLOUDFLARE_ACCOUNT_ID} (deve essere 32)"
+          if ! [[ "$CLOUDFLARE_ACCOUNT_ID" =~ ^[0-9a-f]{32}$ ]]; then
+            # se nel segreto c'è un URL o testo in più, prova a estrarre l'ID; altrimenti usa l'account del token
+            EXTRACTED="$(printf '%s' "$CLOUDFLARE_ACCOUNT_ID" | grep -oE '[0-9a-f]{32}' | head -1 || true)"
+            if [ -n "$EXTRACTED" ]; then export CLOUDFLARE_ACCOUNT_ID="$EXTRACTED"; echo "Account ID estratto dal segreto."
+            else unset CLOUDFLARE_ACCOUNT_ID; echo "Account ID non valido: uso l'account associato al token."; fi
+          fi
           echo "Account a cui il token ha accesso:"
           npx wrangler whoami || true
           npx wrangler deploy
