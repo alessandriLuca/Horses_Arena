@@ -113,6 +113,17 @@ export interface Horse {
   jockey: string;
   bot?: boolean;
   retired?: boolean;
+  botStable?: string; // nome della scuderia (per i cavalli del sistema)
+  plan?: { days: { s: string; i: "leggera" | "normale" | "intensa" }[]; active: boolean };
+  trainedAt?: number; // ultima seduta extra
+  contracts?: { offer: string; tpl: string; pay: number; until: number }[];
+  div?: number; // divisione di campionato per la prossima stagione
+  trophies?: string[];
+  venuesWon?: string[];
+  bornAt?: string; // allevamento d'origine
+  illness?: { id: string; since: number; diagnosed: boolean; treatment: string | null; until: number | null; untreatedDays: number } | null;
+  insurance?: { policy: "nessuna" | "base" | "completa"; value: number; since: number } | null;
+  dead?: { at: number; cause: string } | null;
 }
 
 // --- tempo di gioco ---------------------------------------------------------
@@ -414,6 +425,7 @@ export function tickCondition(h: Horse, now: number): string[] {
 }
 
 export function canRace(h: Horse, now: number): string | null {
+  if (h.dead) return "è morto";
   if (h.retired) return "è in pensione";
   if (ageYears(h, now) < RACING_AGE) return "è ancora un puledro (corre dai 2 anni)";
   if (h.cond.injury && h.cond.injury.until > now) return `è infortunato (${h.cond.injury.name})`;
@@ -462,6 +474,14 @@ export function publicHorse(h: Horse, now: number, owner: boolean) {
     generation: h.generation,
     jockey: h.jockey,
     retired: !!h.retired,
+    dead: h.dead ?? null,
+    illness: h.illness ? (owner ? h.illness : { sick: true }) : null,
+    insurance: owner ? h.insurance ?? null : null,
+    plan: owner ? h.plan ?? null : null,
+    trainedAt: owner ? h.trainedAt ?? 0 : 0,
+    contracts: owner ? h.contracts ?? [] : [],
+    trophies: h.trophies ?? [],
+    botStable: h.botStable ?? null,
     bot: !!h.bot,
     canRace: canRace(h, now),
     mind: owner ? mindSummary(h) : null,

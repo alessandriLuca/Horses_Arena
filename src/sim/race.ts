@@ -11,6 +11,7 @@ import type { Horse } from "./horse";
 import { ageYears, ageFactor, currentFatigue } from "./horse";
 import { STIMULI, SI, NSTIM, chooseStrategy, contextIndex, emptyExperience, STRATEGIES, type Stim } from "./learning";
 import { quirkById } from "./quirks";
+import { illnessPerf } from "../game/health";
 import type { Hazard, Mod, QCtx, RaceEntry, RaceEvent, RaceSpec, Runner, RunnerStatus } from "./types";
 import {
   venueById, trackPoint, railFactor, isCurve, startS, hurdlePositions, GOINGS, WEATHERS, mod as modn, lapLength,
@@ -106,6 +107,7 @@ export function simulateRace(spec: RaceSpec, now: number): RaceResult {
       (1 - Math.pow(fat / 100, 1.5) * 0.12) *
       (1 - ((100 - h.cond.health) / 100) * 0.1) *
       (1 + ((h.cond.morale - 60) / 100) * 0.03) *
+      illnessPerf(h) *
       surf * goingPref * going.speed;
     const strat = chooseStrategy(h.mind, ctxIdx, s.smarts, rng);
     const st = STRATEGIES[strat];

@@ -1054,7 +1054,7 @@ export const QUIRKS: QuirkDef[] = [
     id: "abitudinario", name: "Abitudinario", polarity: "±", rarity: 1,
     desc: "Nell'ippodromo dove ha già vinto si sente a casa.",
     start(r, c) {
-      const won = (r.h.rec as any).venuesWon?.includes?.(c.spec.venue);
+      const won = r.h.venuesWon?.includes(c.spec.venue);
       if (won) { c.mod(r, { speed: 1.025, dur: 999, label: "a casa" }); c.quirk(r, "abitudinario", "qui ha già vinto: si sente a casa"); }
       else c.mod(r, { speed: 0.99, dur: 999, label: "pista nuova" });
     },
