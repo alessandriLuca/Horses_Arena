@@ -5,6 +5,7 @@ import { nonnaSay, nonnaSilence } from "../nonna.js";
 import { startAmbience, setAmbience, stopAmbience, bell, bang, neigh, cheer } from "../audio.js";
 import { t, lang } from "../i18n.js";
 import { venueById } from "../shared/track.js";
+import { QUIRK_FX } from "./quirkfx.js";
 
 const STATUS_TXT = { 2: "inciampa", 3: "a terra", 4: "impennato", 5: "fermo", 7: "ritirato" };
 
@@ -166,10 +167,15 @@ export function openViewer(root, opts) {
       firedFx.add(e);
       if ((e.k === "hitman" || e.k === "incident") && e.x === "petardo") bang();
       const nm = e.a !== undefined ? replay.horses[e.a]?.name ?? "" : "";
-      if (e.a !== undefined && POP[e.k] && (e.k !== "bump" || (e.v ?? 0) > 0.3)) scene.pop(e.a, POP[e.k]);
+      if (e.k === "quirk" && e.a !== undefined) scene.pop(e.a, QUIRK_FX[e.q]?.[1] ?? "🌀", 2.6);
+      else if (e.a !== undefined && POP[e.k] && (e.k !== "bump" || (e.v ?? 0) > 0.3)) scene.pop(e.a, POP[e.k]);
       const GAGQ = { giravolta: "spin", retromarcia: "shake", saltellatore: "bounce", giraffa: "stretch", collo_lungo: "stretch", impennata: "flip", gas_propulsore: "bounce", elettrico: "shake", esplosivo: "stretch", passo_danza: "spin", ballerino: "spin", urlatore: "giant", nitrito_guerra: "giant", pisolino: "squash", starnutone: "shake", ostacoli_immaginari: "flip", carica_toro: "giant", esultanza: "flip", fantasma: "tiny", capobranco: "giant", canguro: "bounce", saltatore_nato: "flip" };
       if (e.a !== undefined) {
-        if (e.k === "quirk") scene.gag(e.a, GAGQ[e.q] ?? ["spin", "bounce", "stretch", "shake"][Math.floor(Math.random() * 4)], 1.5);
+        if (e.k === "quirk") {
+          const fx = QUIRK_FX[e.q];
+          scene.gag(e.a, fx?.[0] ?? GAGQ[e.q] ?? "spin", 1.6);
+          if (fx?.[2] && e.b !== undefined) setTimeout(() => scene.gag(e.b, fx[2], 1.3), 250);
+        }
         else if (e.k === "fall" || e.k === "hurdle_fall") { scene.gag(e.a, "flip", 1.2); scene.pop(e.a, "💫", 3); }
         else if (e.k === "bump" && (e.v ?? 0) > 0.3) { scene.gag(e.a, "squash", 0.6); if (e.b !== undefined) scene.gag(e.b, "shake", 0.8); }
         else if (e.k === "stumble") scene.gag(e.a, "shake", 0.7);
@@ -182,7 +188,7 @@ export function openViewer(root, opts) {
       if (e.k === "fall" || e.k === "hurdle_fall") { callout(`☠️ ${t("CADUTO!")} ${nm}`, "red", true); slowUntil = tt + 2.2; }
       else if (e.k === "hitman") { callout(`🕶️ ${t("SICARIO!")}`, "dark", true); slowUntil = tt + 2.5; }
       else if (e.k === "incident") { callout(`${e.q ?? "⚠️"} ${t("IMPREVISTO!")}`, "dark", true); slowUntil = tt + 2; if (e.a !== undefined) scene.pop(e.a, e.q ?? "⚠️", 3); }
-      else if (e.k === "quirk") callout(`🌀 ${quirkName?.(e.q) ?? e.q}!`, "purple");
+      else if (e.k === "quirk") callout(`${QUIRK_FX[e.q]?.[1] ?? "🌀"} ${quirkName?.(e.q) ?? e.q}!`, "purple");
       else if (e.k === "bump" && (e.v ?? 0) > 0.45) callout(`💥 ${t("SCONTRO!")}`, "");
       else if (e.k === "refuse") callout(`🙅 ${t("RIFIUTO!")} ${nm}`, "");
       else if (e.k === "riderless") callout(`🏳️ ${t("SENZA FANTINO!")}`, "red");
