@@ -13,6 +13,7 @@
     "bindings": [{ "name": "WORLD", "class_name": "World" }]
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["World"] }],
+  "ai": { "binding": "AI", "remote": true },
   "triggers": { "crons": ["*/5 * * * *"] },
   "observability": { "enabled": true }
 }

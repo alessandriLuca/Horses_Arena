@@ -9,7 +9,18 @@ export interface Silks {
   cap: string;
 }
 
+export interface Orders {
+  strategy?: number | null; // indice in STRATEGIES, null = decide il cavallo
+  whip?: "mai" | "normale" | "tanta";
+  lane?: "auto" | "corda" | "esterno";
+  kick?: "presto" | "normale" | "tardi";
+  blinkers?: boolean; // paraocchi
+  earplugs?: boolean; // tappi per le orecchie
+  rainShoes?: boolean; // ferri da pioggia
+}
+
 export interface RaceEntry {
+  orders?: Orders;
   horse: Horse;
   stable: string;
   ownerId: string | null;

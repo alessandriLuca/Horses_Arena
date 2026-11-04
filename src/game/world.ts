@@ -16,7 +16,7 @@ import type { RaceEntry, RaceSpec, Silks, HitmanOrder } from "../sim/types";
 import { VENUES, GOINGS, WEATHERS } from "../../public/js/shared/track.js";
 import { HOUR, MIN, DAY_MS, romeParts, romeTime, romeDayStart, nextRomeClock, dayKey } from "./time";
 import { applySession, sessionCost } from "./training";
-import { SECURITY, crimeById } from "./crime";
+import { SECURITY, crimeById, DETECTIVES } from "./crime";
 import { DISEASES, diseaseById, rollIllness, POLICIES, DEATH_WAITING_MS } from "./health";
 
 export class GameError extends Error {}
@@ -327,6 +327,8 @@ export class Game {
       case "loan": return this.loanDue(ref);
       case "tround": return this.tournamentRound(ref);
       case "heal": return this.healCheck(ref);
+      case "investigation": return this.investigationDone(ref);
+      case "police": return this.policeDone(ref);
     }
   }
 
@@ -551,10 +553,10 @@ export class Game {
     this.db.run("UPDATE races SET data = ?, status = ?, name = ? WHERE id = ?", JSON.stringify(r.data), r.status, r.name, r.id);
   }
 
-  raceEntries(raceId: string): { horse: Horse; owner: string | null }[] {
+  raceEntries(raceId: string): { horse: Horse; owner: string | null; orders: any }[] {
     return this.db
-      .all<{ data: string; owner: string | null }>("SELECT h.data, e.owner FROM entries e JOIN horses h ON h.id = e.horse_id WHERE e.race_id = ? ORDER BY e.created", raceId)
-      .map((r) => ({ horse: JSON.parse(r.data) as Horse, owner: r.owner }));
+      .all<{ data: string; owner: string | null; orders: string | null }>("SELECT h.data, e.owner, e.orders FROM entries e JOIN horses h ON h.id = e.horse_id WHERE e.race_id = ? ORDER BY e.created", raceId)
+      .map((r) => ({ horse: JSON.parse(r.data) as Horse, owner: r.owner, orders: r.orders ? JSON.parse(r.orders) : null }));
   }
 
   /** Controlli d'iscrizione comuni. */
@@ -676,6 +678,7 @@ export class Game {
         ownerId: e.owner,
         silks: p ? p.silks : botSilks(e.horse.botStable ?? "Allevamento Nazionale"),
         security: p ? p.data.security : 1,
+        orders: e.orders ?? undefined,
       };
     });
     const spec: RaceSpec = {
@@ -1153,6 +1156,51 @@ export class Game {
     this.savePlayer(p);
     this.money(pid, -loan.amount, `Restituzione: ${loan.title}`, true);
     this.note(pid, "money", `🏦 Scaduto "${loan.title}": restituiti ${loan.amount} ƒ.`);
+  }
+
+  // ---- indagini
+  investigationDone(crimeId: string) {
+    const c = this.db.one<any>("SELECT * FROM crimes WHERE id = ?", crimeId);
+    if (!c) return;
+    const d = JSON.parse(c.data || "{}");
+    if (!d.inv || d.inv.done) return;
+    const det = DETECTIVES.find((x) => x.id === d.inv.det);
+    const svc = crimeById(c.service);
+    const h = this.horse(c.target_horse);
+    d.inv.done = true;
+    const ok = Math.random() < (det?.chance ?? 0.4);
+    d.inv.result = ok;
+    if (ok) {
+      d.solved = true;
+      const culprit = this.player(c.by_player);
+      this.note(c.target_owner, "crime", `🕵️ ${det?.name}: caso risolto! Dietro "${svc?.name}" contro ${h?.name ?? "il tuo cavallo"} c'è la scuderia "${culprit?.stable}" (${culprit?.name}). Ora puoi denunciarli alla polizia.`, "/mercato-nero?tab=casi");
+      this.note(c.by_player, "crime", `😰 Un detective privato ha scoperto che sei stato tu a ordinare "${svc?.name}". Preparati...`);
+    } else {
+      this.note(c.target_owner, "crime", `🕵️ ${det?.name}: niente da fare, il colpevole ha coperto bene le tracce. Puoi riprovare con un altro detective.`, "/mercato-nero?tab=casi");
+    }
+    this.db.run("UPDATE crimes SET data = ? WHERE id = ?", JSON.stringify(d), crimeId);
+  }
+
+  policeDone(crimeId: string) {
+    const c = this.db.one<any>("SELECT * FROM crimes WHERE id = ?", crimeId);
+    if (!c) return;
+    const d = JSON.parse(c.data || "{}");
+    if (!d.police || d.police.done) return;
+    d.police.done = true;
+    const svc = crimeById(c.service);
+    const h = this.horse(c.target_horse);
+    const ok = Math.random() < (d.solved ? 0.92 : 0.15);
+    d.police.result = ok;
+    if (ok && !d.convicted) {
+      d.convicted = true;
+      d.solved = true;
+      const killer = svc?.id === "killer";
+      this.punishCrime(c.by_player, svc?.name ?? c.service, svc?.cost ?? 3000, c.target_owner, h?.name ?? "un cavallo", killer ? 3 : 2.5, killer ? 5 : 2);
+      this.note(c.target_owner, "crime", `👮 La polizia ha arrestato il mandante! Giustizia è fatta.`);
+    } else if (!ok) {
+      this.note(c.target_owner, "crime", `👮 La polizia ha archiviato il caso per mancanza di prove. Prova con un detective privato.`, "/mercato-nero?tab=casi");
+    }
+    this.db.run("UPDATE crimes SET data = ? WHERE id = ?", JSON.stringify(d), crimeId);
   }
 
   // ---- tornei: implementati in actions.ts (agganci)

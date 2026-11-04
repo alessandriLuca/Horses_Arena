@@ -7,10 +7,13 @@ import { canRace, valuation, overall } from "./sim/horse";
 import { quirkCatalog } from "./sim/quirks";
 import { OFFERS } from "./game/offers";
 import { VENUES } from "../public/js/shared/track.js";
+import { assistantChat } from "./game/assistant";
 
 export interface Env {
   WORLD: DurableObjectNamespace<World>;
   ASSETS: Fetcher;
+  AI?: Ai;
+  AI_DISABLED?: string;
 }
 
 function json(data: unknown, status = 200): Response {
@@ -136,6 +139,7 @@ export class World extends DurableObject<Env> {
         upcoming, live, venues: VENUES,
       });
     }
+    if (path === "/assistant/status") return json({ enabled: this.aiEnabled() });
     if (path === "/register" && method === "POST") return json(A.register(g, body));
     if (path === "/login" && method === "POST") return json(A.login(g, body));
     if (path === "/catalog") return json({ ...A.catalogs(), quirks: quirkCatalog(), offers: OFFERS.length, venues: VENUES, divisions: DIVISIONS });
@@ -201,11 +205,30 @@ export class World extends DurableObject<Env> {
     if (path === "/offers/accept") return json(A.acceptOffer(g, me, body.offerId, body.horseId));
     if (path === "/crime") return json(A.orderCrime(g, me, body));
     if (path === "/security") return json(A.setSecurity(g, me, Number(body.level)));
+    if (path === "/mail" && method === "GET") return json({ mail: A.inbox(g, me) });
+    if (path === "/mail" && method === "POST") return json(A.sendMail(g, me, body));
+    if (seg[0] === "mail" && seg[1] && seg[2] === "read") return json(A.mailRead(g, me, seg[1]));
+    if (seg[0] === "mail" && seg[1] && seg[2] === "pay") return json(A.mailPay(g, me, seg[1], !!body.accept));
+    if (path === "/cases" && method === "GET") return json({ cases: A.cases(g, me) });
+    if (path === "/investigate") return json(A.investigate(g, me, body.crimeId, body.detective));
+    if (path === "/police") return json(A.reportPolice(g, me, body.crimeId));
     if (path === "/chat" && method === "POST") return json(A.chat(g, me, body.text));
+    if (path === "/assistant" && method === "POST") {
+      if (!this.aiEnabled()) throw new GameError("L'assistente non è attivo su questo server (serve Cloudflare Workers AI).");
+      const history = Array.isArray(body.messages) ? body.messages : [];
+      try {
+        return json(await assistantChat(g, this.env.AI!, me, history, String(body.lang ?? "it")));
+      } catch (e) {
+        if (e instanceof GameError) throw e;
+        console.error("AI", e);
+        throw new GameError("Nonna Pina non risponde: il servizio AI ha dato errore. Riprova fra poco.");
+      }
+    }
     if (seg[0] === "race" && seg[1] && method === "POST") {
       if (seg[2] === "enter") return json(A.enterRace(g, me, seg[1], body.horseId));
       if (seg[2] === "withdraw") return json(A.withdraw(g, me, seg[1], body.horseId));
       if (seg[2] === "bet") return json(A.placeBet(g, me, seg[1], body.horseId, body.amount));
+      if (seg[2] === "orders") return json(A.setOrders(g, me, seg[1], body.horseId, body.orders));
     }
     if (seg[0] === "horse" && seg[1] && method === "POST") {
       const id = seg[1];
@@ -222,6 +245,10 @@ export class World extends DurableObject<Env> {
       }
     }
     return json({ error: "non trovato" }, 404);
+  }
+
+  aiEnabled() {
+    return !!this.env.AI && this.env.AI_DISABLED !== "1";
   }
 
   upcoming(from: number, to: number, limit: number, withDone = false) {
@@ -254,6 +281,7 @@ export class World extends DurableObject<Env> {
       return {
         id: v.id, name: v.name, stable: v.stable, silks: v.silks, look: v.look, owner: e.owner, rating: v.rating, form: v.rec.form.slice(0, 5),
         age: v.age, sex: v.sex, quirks: v.quirks, hidden: v.hiddenQuirks, odds: odds.get(v.id) ?? null, mine: !!p && e.owner === p.id, fatigue: v.cond.fatigue, jockey: v.jockey,
+        orders: p && e.owner === p.id ? e.orders : undefined, prefs: p && e.owner === p.id ? v.mind?.prefs : undefined,
       };
     });
     const finished = r.status === "done";

@@ -61,10 +61,18 @@ export const SCHEMA = [
   `CREATE INDEX IF NOT EXISTS crimes_race ON crimes(race_id)`,
   `CREATE TABLE IF NOT EXISTS challenges (id TEXT PRIMARY KEY, from_player TEXT, from_horse TEXT, to_player TEXT, to_horse TEXT,
     stake INTEGER, status TEXT, created INTEGER, race_id TEXT, data TEXT)`,
+  `CREATE TABLE IF NOT EXISTS mail (id TEXT PRIMARY KEY, sender TEXT, recipient TEXT, ts INTEGER, subject TEXT, body TEXT,
+    money INTEGER DEFAULT 0, horse_id TEXT, horse_name TEXT, request INTEGER DEFAULT 0, status TEXT, read INTEGER DEFAULT 0)`,
+  `CREATE INDEX IF NOT EXISTS mail_rcpt ON mail(recipient, ts)`,
+  `CREATE INDEX IF NOT EXISTS mail_sender ON mail(sender, ts)`,
   `CREATE TABLE IF NOT EXISTS ledger (id INTEGER PRIMARY KEY AUTOINCREMENT, player TEXT, ts INTEGER, amount INTEGER, reason TEXT)`,
   `CREATE INDEX IF NOT EXISTS ledger_player ON ledger(player, id)`,
 ];
 
 export function migrate(db: Db) {
   for (const q of SCHEMA) db.run(q);
+  // colonne aggiunte dopo
+  for (const q of ["ALTER TABLE entries ADD COLUMN orders TEXT"]) {
+    try { db.run(q); } catch { /* esiste già */ }
+  }
 }

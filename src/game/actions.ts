@@ -6,7 +6,7 @@ import { exposeStimulus, type Stim } from "../sim/learning";
 import type { Silks } from "../sim/types";
 import { OFFERS, offerById, rollBoard } from "./offers";
 import { applySession, sessionCost, validatePlan, SESSIONS, INTENSITIES } from "./training";
-import { CRIMES, crimeById, SECURITY } from "./crime";
+import { CRIMES, crimeById, SECURITY, DETECTIVES } from "./crime";
 import { DISEASES, diseaseById, TREATMENTS, DIAGNOSIS_COST, TRIALS, trialById, applyTrial, POLICIES } from "./health";
 import { validateConfig, nextSlot } from "./tournaments";
 import { DAY_MS, HOUR, MIN } from "./time";
@@ -84,6 +84,7 @@ export function me(g: Game, p: Player) {
     rep: p.data.rep, security: p.data.security, stalls: p.data.stalls, used: horses.filter((h: any) => !h.dead).length,
     crimeBan: p.data.crimeBan, wins: p.data.wins, races: p.data.races, earnings: p.data.earnings, tut: p.data.tut, loans: p.data.loans,
     horses, notes, entries, challenges, season: g.season(), now,
+    mailUnread: g.db.one<{ n: number }>("SELECT COUNT(*) AS n FROM mail WHERE recipient = ? AND read = 0", p.id)!.n,
   };
 }
 
@@ -93,6 +94,11 @@ export function seenNotes(g: Game, p: Player) {
 }
 
 export function markTutorial(g: Game, p: Player, step: string) {
+  if (step === "__reset") {
+    p.data.tut = {};
+    g.savePlayer(p);
+    return { ok: true };
+  }
   g.tut(p, cleanText(step, 30));
   return { ok: true };
 }
@@ -255,6 +261,27 @@ export function enterRace(g: Game, p: Player, raceId: string, hid: string) {
   g.addEntry(r!.id, h, p.id);
   g.tut(p, "iscrizione");
   return { ok: true };
+}
+
+const EQUIP_COST = { blinkers: 120, earplugs: 80, rainShoes: 150 };
+export function setOrders(g: Game, p: Player, raceId: string, hid: string, o: any) {
+  const r = g.race(raceId);
+  if (!r || r.status !== "open" || g.now() > r.start_at - CLOSE_BEFORE) fail("Gli ordini si danno prima della chiusura.");
+  const e = g.db.one<{ orders: string | null }>("SELECT orders FROM entries WHERE race_id = ? AND horse_id = ? AND owner = ?", raceId, hid, p.id);
+  if (!e) fail("Il cavallo non è iscritto a questa corsa.");
+  const prev = e!.orders ? JSON.parse(e!.orders) : {};
+  const orders = {
+    strategy: o?.strategy === null || o?.strategy === undefined || o?.strategy === "" ? null : clamp(Math.round(Number(o.strategy)), 0, 5),
+    whip: ["mai", "normale", "tanta"].includes(o?.whip) ? o.whip : "normale",
+    lane: ["auto", "corda", "esterno"].includes(o?.lane) ? o.lane : "auto",
+    kick: ["presto", "normale", "tardi"].includes(o?.kick) ? o.kick : "normale",
+    blinkers: !!o?.blinkers, earplugs: !!o?.earplugs, rainShoes: !!o?.rainShoes,
+  };
+  let cost = 0;
+  for (const k of ["blinkers", "earplugs", "rainShoes"] as const) if (orders[k] && !prev[k]) cost += EQUIP_COST[k];
+  if (cost) g.money(p.id, -cost, "Attrezzatura per la corsa");
+  g.db.run("UPDATE entries SET orders = ? WHERE race_id = ? AND horse_id = ?", JSON.stringify(orders), raceId, hid);
+  return { ok: true, orders, cost };
 }
 
 export function withdraw(g: Game, p: Player, raceId: string, hid: string) {
@@ -693,6 +720,50 @@ export function setSecurity(g: Game, p: Player, level: number) {
   return { ok: true, level };
 }
 
+// ======================================================= indagini: detective e polizia
+export function cases(g: Game, p: Player) {
+  const rows = g.db.all<any>("SELECT * FROM crimes WHERE target_owner = ? AND ts > ? ORDER BY ts DESC LIMIT 40", p.id, g.now() - 10 * DAY_MS);
+  return rows.map((c) => {
+    const d = JSON.parse(c.data || "{}");
+    const svc = crimeById(c.service);
+    const h = g.horse(c.target_horse);
+    const known = c.status === "caught" || d.solved;
+    const culprit = known ? g.player(c.by_player) : null;
+    return {
+      id: c.id, ts: c.ts, service: svc?.name ?? c.service, icon: svc?.icon ?? "❓", horse: h?.name ?? "?", horseId: c.target_horse,
+      status: c.status, solved: !!known, culprit: culprit ? `${culprit.stable} (${culprit.name})` : null,
+      inv: d.inv ?? null, police: d.police ?? null, convicted: !!d.convicted || c.status === "caught",
+    };
+  });
+}
+
+export function investigate(g: Game, p: Player, crimeId: string, det: string) {
+  const c = g.db.one<any>("SELECT * FROM crimes WHERE id = ? AND target_owner = ?", crimeId, p.id);
+  if (!c) fail("Caso non trovato.");
+  const d = JSON.parse(c.data || "{}");
+  if (c.status === "caught" || d.solved) fail("Il colpevole è già noto.");
+  if (d.inv && !d.inv.done) fail("C'è già un detective al lavoro.");
+  const dt = DETECTIVES.find((x) => x.id === det);
+  if (!dt) fail("Detective sconosciuto.");
+  g.money(p.id, -dt!.cost, `Detective: ${dt!.name}`);
+  d.inv = { det: dt!.id, name: dt!.name, until: g.now() + dt!.hours * HOUR, done: false };
+  g.db.run("UPDATE crimes SET data = ? WHERE id = ?", JSON.stringify(d), crimeId);
+  g.schedule("investigation", crimeId, d.inv.until);
+  return { ok: true, text: `${dt!.icon} ${dt!.name} si mette al lavoro. Avrai notizie fra ${dt!.hours} ore.` };
+}
+
+export function reportPolice(g: Game, p: Player, crimeId: string) {
+  const c = g.db.one<any>("SELECT * FROM crimes WHERE id = ? AND target_owner = ?", crimeId, p.id);
+  if (!c) fail("Caso non trovato.");
+  const d = JSON.parse(c.data || "{}");
+  if (d.police && !d.police.done) fail("La denuncia è già stata presentata.");
+  if (d.convicted || c.status === "caught") fail("Il colpevole è già stato punito.");
+  d.police = { until: g.now() + (d.solved ? 2 : 24) * HOUR, done: false, withEvidence: !!d.solved };
+  g.db.run("UPDATE crimes SET data = ? WHERE id = ?", JSON.stringify(d), crimeId);
+  g.schedule("police", crimeId, d.police.until);
+  return { ok: true, text: d.solved ? "👮 Denuncia presentata con le prove del detective: la polizia interviene entro 2 ore." : "👮 Denuncia presentata. Senza prove la polizia ci metterà un giorno, e non è detto che trovi qualcosa." };
+}
+
 // ======================================================= salute e assicurazioni
 export function insure(g: Game, p: Player, hid: string, policy: string) {
   const h = g.ownedHorse(p.id, hid);
@@ -807,6 +878,80 @@ export function joinTrial(g: Game, p: Player, hid: string, trialId: string) {
   return { ok: true, text };
 }
 
+// ======================================================= posta tra giocatori
+export function findPlayer(g: Game, who: string): Player | null {
+  const w = cleanText(who, 40);
+  const r = g.db.one<any>("SELECT * FROM players WHERE id = ? OR lower(stable) = lower(?) OR lower(name) = lower(?) LIMIT 1", w, w, w);
+  return r ? g.rowToPlayer(r) : null;
+}
+
+export function sendMail(g: Game, p: Player, b: any) {
+  const to = findPlayer(g, String(b.to ?? ""));
+  if (!to) fail("Destinatario non trovato (scrivi il nome della scuderia).");
+  if (to!.id === p.id) fail("Non puoi scrivere a te stesso.");
+  const sent = g.db.one<{ n: number }>("SELECT COUNT(*) AS n FROM mail WHERE sender = ? AND ts > ?", p.id, g.now() - HOUR)!.n;
+  if (sent >= 30) fail("Hai mandato troppe lettere: aspetta un po'.");
+  const subject = cleanText(b.subject, 80) || "(senza oggetto)";
+  const body = cleanText(b.body, 2000);
+  const money = Math.max(0, Math.round(Number(b.money) || 0));
+  const request = Math.max(0, Math.round(Number(b.request) || 0));
+  if (money > 1_000_000 || request > 1_000_000) fail("Cifra troppo alta.");
+  let horseName: string | null = null;
+  let horseId: string | null = null;
+  if (b.horseId) {
+    const h = g.ownedHorse(p.id, String(b.horseId));
+    if (h.cond.busy?.reason === "in gara") fail("Non puoi spedirlo mentre corre.");
+    if (g.stallsUsed(to!.id) >= to!.data.stalls) fail(`${to!.stable} non ha box liberi.`);
+    h.ownerId = to!.id;
+    h.contracts = [];
+    h.insurance = null;
+    g.db.run("DELETE FROM entries WHERE horse_id = ? AND race_id IN (SELECT id FROM races WHERE status = 'open')", h.id);
+    g.db.run("DELETE FROM league WHERE horse_id = ? AND season = ?", h.id, g.season().n);
+    g.saveHorse(h, { price: null, market: 0, stud: null });
+    horseName = h.name;
+    horseId = h.id;
+  }
+  if (money) {
+    g.money(p.id, -money, `Posta: soldi a ${to!.stable}`);
+    g.money(to!.id, money, `Posta: soldi da ${p.stable}`);
+  }
+  const id = g.newId("m");
+  g.db.run(
+    "INSERT INTO mail (id, sender, recipient, ts, subject, body, money, horse_id, horse_name, request, status, read) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)",
+    id, p.id, to!.id, g.now(), subject, body, money, horseId, horseName, request, request ? "request" : "sent",
+  );
+  const extra = [money ? `💰 ${money} ƒ` : "", horseName ? `🐴 ${horseName}` : "", request ? `🙏 chiede ${request} ƒ` : ""].filter(Boolean).join(" · ");
+  g.note(to!.id, "mail", `✉️ Posta da "${p.stable}": ${subject}${extra ? " — " + extra : ""}`, "/posta");
+  return { ok: true, text: `Lettera spedita a ${to!.stable}.` };
+}
+
+export function inbox(g: Game, p: Player) {
+  const rows = g.db.all<any>("SELECT * FROM mail WHERE recipient = ? OR sender = ? ORDER BY ts DESC LIMIT 80", p.id, p.id);
+  const names = new Map<string, string>();
+  const nm = (id: string) => {
+    if (!names.has(id)) names.set(id, g.db.one<{ stable: string }>("SELECT stable FROM players WHERE id = ?", id)?.stable ?? "?");
+    return names.get(id)!;
+  };
+  return rows.map((m) => ({ ...m, mine: m.sender === p.id, fromName: nm(m.sender), toName: nm(m.recipient) }));
+}
+
+export function mailRead(g: Game, p: Player, id: string) {
+  g.db.run("UPDATE mail SET read = 1 WHERE id = ? AND recipient = ?", id, p.id);
+  return { ok: true };
+}
+
+export function mailPay(g: Game, p: Player, id: string, accept: boolean) {
+  const m = g.db.one<any>("SELECT * FROM mail WHERE id = ? AND recipient = ? AND status = 'request'", id, p.id);
+  if (!m) fail("Richiesta non trovata.");
+  if (accept) {
+    g.money(p.id, -m.request, `Pagamento richiesto da posta`);
+    g.money(m.sender, m.request, `Pagamento ricevuto da ${p.stable}`);
+    g.note(m.sender, "mail", `💰 "${p.stable}" ha pagato la tua richiesta di ${m.request} ƒ.`, "/posta");
+  } else g.note(m.sender, "mail", `🙅 "${p.stable}" ha rifiutato la tua richiesta di ${m.request} ƒ.`, "/posta");
+  g.db.run("UPDATE mail SET status = ?, read = 1 WHERE id = ?", accept ? "paid" : "declined", id);
+  return { ok: true };
+}
+
 // ======================================================= chat
 export function chat(g: Game, p: Player, text: string) {
   const t = cleanText(text, 300);
@@ -822,7 +967,7 @@ export function chat(g: Game, p: Player, text: string) {
 export function catalogs() {
   return {
     sessions: SESSIONS, intensities: INTENSITIES, crimes: CRIMES, security: SECURITY, diseases: DISEASES.map((d) => ({ id: d.id, name: d.name, severity: d.severity, contagious: d.contagious > 0 })),
-    treatments: TREATMENTS, trials: TRIALS, policies: POLICIES, diagnosisCost: DIAGNOSIS_COST, divisions: DIVISIONS, classes: CLASS_INFO,
+    treatments: TREATMENTS, trials: TRIALS, detectives: DETECTIVES, policies: POLICIES, diagnosisCost: DIAGNOSIS_COST, divisions: DIVISIONS, classes: CLASS_INFO,
     stats: STAT_KEYS,
   };
 }

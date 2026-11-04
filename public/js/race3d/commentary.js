@@ -6,6 +6,7 @@ const fill = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => (v[k] ?? "") + "");
 
 const L = {
   it: {
+    disobey: ["{a} se ne frega degli ordini del fantino! Vuole fare di testa sua, come mio nipote.", "Il fantino di {a} tira le redini, ma lui fa come gli pare!"],
     intro: [
       "Buonasera da {venue}! {dist} metri su terreno {going}, tempo: {weather}. Mettetevi comodi, che la nonna ha portato i taralli.",
       "Eccoci a {venue}! Corsa sui {dist} metri, terreno {going}. Io ho scommesso cinque euro, non ditelo al nonno.",
@@ -57,6 +58,7 @@ const L = {
     last: ["E ultimo {a}... l'importante è partecipare. Dicono."],
   },
   en: {
+    disobey: ["{a} ignores the jockey's orders! Stubborn like my grandson."],
     intro: ["Good evening from {venue}! {dist} metres, going {going}, weather: {weather}. Grandma brought snacks.", "Welcome to {venue}! {n} horses, {dist} metres and a grandma with high blood pressure already!"],
     favorite: ["Watch out for {a}: the favourite. My cousin was a favourite once too, and look how that ended."],
     ready: ["Horses in the gates... quiet in the stands!", "Everyone ready? You too, munching those crisps?"],
@@ -95,6 +97,7 @@ const L = {
     last: ["And {a} last... it's the taking part that counts. So they say."],
   },
   de: {
+    disobey: ["{a} ignoriert die Befehle des Jockeys! Stur wie mein Enkel."],
     intro: ["Guten Abend aus {venue}! {dist} Meter, Boden {going}, Wetter: {weather}. Oma hat Kekse mitgebracht.", "Willkommen in {venue}! {n} Pferde, {dist} Meter und eine Oma mit Bluthochdruck!"],
     favorite: ["Achtung auf {a}: der Favorit. Mein Cousin war auch mal Favorit, und schaut, wie das ausging."],
     ready: ["Pferde in der Startbox... Ruhe auf der Tribüne!"],
@@ -121,6 +124,7 @@ const L = {
     dq: ["{a} wegen Dopings disqualifiziert! Schande!"], last: ["Und {a} Letzter... dabei sein ist alles."],
   },
   ru: {
+    disobey: ["{a} не слушается жокея! Упрямый, как мой внук."],
     intro: ["Добрый вечер из {venue}! {dist} метров, грунт {going}, погода: {weather}. Бабушка принесла пирожки!", "Добро пожаловать в {venue}! {n} лошадей и бабушка с давлением!"],
     favorite: ["Следите за {a}: фаворит. Мой кузен тоже был фаворитом, и чем всё кончилось?"],
     ready: ["Лошади в боксах... тишина на трибунах!"], start: ["СТАРТ! Как мои подружки на распродаже!", "Поехали! Бегите, макароны стынут!"],
@@ -140,6 +144,7 @@ const L = {
     last: ["А {a} последний... главное — участие."],
   },
   ja: {
+    disobey: ["{a}は騎手の指示を無視！孫みたいに頑固ね。"],
     intro: ["{venue}からこんばんは！{dist}メートル、馬場は{going}、天気は{weather}。おばあちゃんはお菓子を持ってきたよ。", "{venue}へようこそ！{n}頭の馬と、血圧の高いおばあちゃんです！"],
     favorite: ["{a}に注目！本命よ。でも私のいとこも本命だったけど、ねえ…"], ready: ["ゲートイン…スタンドは静かに！"],
     start: ["スタート！バーゲンに走る私の友達みたい！", "行け！パスタが冷めちゃうよ！"], badStart: ["{a}はゆっくりスタート、各駅停車みたい。"],
@@ -157,6 +162,7 @@ const L = {
     dq: ["{a}はドーピングで失格！恥ずかしい！"], last: ["そして{a}は最下位…参加することに意義がある、らしいわ。"],
   },
   zh: {
+    disobey: ["{a}不听骑师的指挥！跟我孙子一样倔。"],
     intro: ["来自{venue}的晚上好！{dist}米，场地{going}，天气{weather}。奶奶带了零食！", "欢迎来到{venue}！{n}匹马，还有一个血压已经很高的奶奶！"],
     favorite: ["注意{a}：大热门。我表哥以前也是热门，结果呢……"], ready: ["马匹进闸……看台安静！"],
     start: ["出发了！就像我的朋友们冲进打折商场！", "跑啊！面条要凉了！"], badStart: ["{a}起步很慢，像慢车一样。"],
@@ -198,7 +204,7 @@ const MOOD = {
   spook: "shock", quirk: "sly", exhausted: "sly", hurdle_fall: "shock", refuse: "angry", hitman: "angry", caught: "proud",
   hazard: "shock", riderless: "shock", photo: "shock", winner: "yell", dq: "angry", m100: "yell", m200: "yell",
 };
-const PRIO = { fall: 3, hitman: 3, winner: 3, photo: 3, m100: 3, m200: 2, start: 3, caught: 2, hazard: 2, riderless: 2, hurdle_fall: 3, refuse: 2, quirk: 1.5, lead: 1.5, dq: 3 };
+const PRIO = { disobey: 2, fall: 3, hitman: 3, winner: 3, photo: 3, m100: 3, m200: 2, start: 3, caught: 2, hazard: 2, riderless: 2, hurdle_fall: 3, refuse: 2, quirk: 1.5, lead: 1.5, dq: 3 };
 
 export class Commentary {
   constructor(replay, info, lang, hooks) {
@@ -280,6 +286,7 @@ export class Commentary {
     const b = e.b !== undefined ? this.name(e.b) : "";
     switch (e.k) {
       case "start": return this.line("start", {}, -1, t);
+      case "disobey": if (t - this.lastLine > 1.5) this.line("disobey", { a }, e.a, t); return;
       case "lead":
         this.leadCount++;
         if (this.leadCount > 1 && t - this.lastLine < 3) return;

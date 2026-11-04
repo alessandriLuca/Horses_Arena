@@ -49,3 +49,10 @@ export const SECURITY = [
   { level: 2, name: "Vigilanza privata", perDay: 650, intercept: 0.55 },
   { level: 3, name: "Servizio d'élite con cani", perDay: 1400, intercept: 0.75 },
 ];
+
+/** Detective privati per indagare sui sabotaggi subiti. */
+export const DETECTIVES = [
+  { id: "zenzero", name: "Ispettore Zenzero", icon: "🕵️", desc: "Ex vigile urbano in pensione. Economico, un po' distratto.", cost: 3000, chance: 0.35, hours: 6 },
+  { id: "sherlock", name: "Agenzia Sherlock & Figli", icon: "🔎", desc: "Seri professionisti con lente d'ingrandimento e pipa.", cost: 8000, chance: 0.6, hours: 12 },
+  { id: "kenshin", name: "Detective Kenshin Hayabusa", icon: "🥷", desc: "Leggendario investigatore venuto da Tokyo. Non ha mai fallito un caso (quasi).", cost: 20000, chance: 0.87, hours: 24 },
+];

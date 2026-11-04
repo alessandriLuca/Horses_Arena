@@ -109,7 +109,18 @@ export function simulateRace(spec: RaceSpec, now: number): RaceResult {
       (1 + ((h.cond.morale - 60) / 100) * 0.03) *
       illnessPerf(h) *
       surf * goingPref * going.speed;
-    const strat = chooseStrategy(h.mind, ctxIdx, s.smarts, rng);
+    let strat = chooseStrategy(h.mind, ctxIdx, s.smarts, rng);
+    const ord = e.orders ?? {};
+    let disobeyed = false;
+    let ordered = false;
+    if (ord.strategy !== undefined && ord.strategy !== null && ord.strategy >= 0 && ord.strategy < STRATEGIES.length && ord.strategy !== strat) {
+      // obbedisce di più se concentrato; meno se l'ordine va contro quello che ha imparato
+      const q = h.mind.q[ctxIdx];
+      const gap = Math.max(...q) - q[ord.strategy];
+      const obey = clamp(0.5 + 0.42 * (s.focus / 100) + 0.08 * (s.smarts / 100) - gap * 0.6, 0.15, 0.97);
+      if (rng.chance(obey)) { strat = ord.strategy; ordered = true; }
+      else disobeyed = true;
+    }
     const st = STRATEGIES[strat];
     const r: Runner = {
       i, h, e,
@@ -161,6 +172,17 @@ export function simulateRace(spec: RaceSpec, now: number): RaceResult {
       topSpeedSeen: 0,
     };
     r.dprime = r.dmax;
+    r.q.orders = ord;
+    if (disobeyed) r.q.disobeyed = true;
+    if (ordered) { const q = h.mind.q[ctxIdx]; if (Math.max(...q) - q[strat] > 0.15) r.arousal += 0.12; }
+    if (ord.lane === "corda") r.plan.rail = 1;
+    else if (ord.lane === "esterno") r.plan.rail = 0.15;
+    if (ord.kick === "presto") r.plan.kickAt += 160;
+    else if (ord.kick === "tardi") r.plan.kickAt -= 130;
+    if (ord.blinkers) { r.fearV[SI.luci] *= 0.4; r.fearV[SI.folla] *= 0.5; r.fearV[SI.curve] *= 0.6; r.latMax *= 0.9; }
+    if (ord.earplugs) { r.fearV[SI.urla] *= 0.35; r.fearV[SI.botti] *= 0.45; r.fearV[SI.folla] *= 0.7; }
+    if (ord.rainShoes && (going.id === "morbido" || going.id === "pesante")) { r.vmax *= 1.012; r.cs *= 1.01; }
+    else if (ord.rainShoes) { r.vmax *= 0.993; }
     r.vmax *= form;
     r.cs *= form;
     // paura delle gabbie
@@ -541,6 +563,7 @@ export function simulateRace(spec: RaceSpec, now: number): RaceResult {
     for (const r of runners) {
       if (r.status === "gate" && t >= r.startDelay) {
         r.status = r.statusT > 0 ? "rear" : "run";
+        if (r.q.disobeyed) ev({ k: "disobey", a: r.i, x: STRATEGIES[r.strat].name });
         for (const id of r.quirks) quirkById(id)?.start?.(r, ctx);
       }
     }
@@ -780,6 +803,9 @@ export function simulateRace(spec: RaceSpec, now: number): RaceResult {
     const sens = (1.3 - s.courage / 100) * (r.q.zenFactor ?? 1);
     let fearIn = 0;
     let comfortIn = 0;
+    const ordr = r.q.orders;
+    if (ordr?.blinkers) { r.stimNow[SI.luci] *= 0.4; r.stimNow[SI.folla] *= 0.6; }
+    if (ordr?.earplugs) { r.stimNow[SI.urla] *= 0.4; r.stimNow[SI.botti] *= 0.5; }
     for (let k = 0; k < NSTIM; k++) {
       const inten = r.stimNow[k];
       if (!inten) continue;
@@ -876,12 +902,14 @@ export function simulateRace(spec: RaceSpec, now: number): RaceResult {
       target = lerp(csNow * r.plan.kickEffort, vOpt, skill);
       effort = target / csNow;
       // frusta
-      if (rem < 380 && !r.riderless && t - r.whipT > 1.6 + rng.range(0, 1.2)) {
+      const whipMode = r.q.orders?.whip ?? "normale";
+      const whipGap = whipMode === "tanta" ? 0.8 : 1.6;
+      if (whipMode !== "mai" && rem < (whipMode === "tanta" ? 520 : 380) && !r.riderless && t - r.whipT > whipGap + rng.range(0, 1.2)) {
         r.whipT = t;
         stim(r, "frusta", 1);
         const fv = h.mind.v.frusta;
         if (fv > 0.3 && !r.q.whipBoost) arouse(r, fv * 0.35);
-        else addMod(r, { speed: 1 + 0.012 * (r.q.whipBoost ?? 1) * (fv < -0.2 ? 1.6 : 1), dur: 1.2, label: "frusta" });
+        else addMod(r, { speed: 1 + 0.012 * (r.q.whipBoost ?? 1) * (fv < -0.2 ? 1.6 : 1) * (whipMode === "tanta" ? 1.25 : 1), cost: whipMode === "tanta" ? 1.06 : 1, dur: 1.2, label: "frusta" });
       }
     }
 
