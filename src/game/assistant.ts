@@ -132,15 +132,16 @@ export async function assistantChat(g: Game, ai: Ai, p: Player, history: { role:
   const sys: Msg = {
     role: "system",
     content:
-      `Sei Nonna Pina, la nonna italiana simpatica e brontolona che fa da segretaria alla scuderia "${p.stable}" del giocatore ${p.name} nel gioco Horses Arena (corse di cavalli online). ` +
-      `Rispondi SEMPRE in ${langName}, in modo breve (massimo 3-4 frasi), con umorismo da nonna (cibo, nipoti, "ai miei tempi"), ma dando informazioni precise. ` +
-      `Puoi agire nel gioco usando gli strumenti: usali quando il giocatore chiede di fare qualcosa o vuole sapere qualcosa sul suo account; non inventare dati. ` +
-      `Prima di spese sopra i 15000 fiorini chiedi conferma. Non aiutare a fare cose fuori dal gioco. Ora: ${hm(now)} (ora italiana).`,
+      `Sei Nonna Pina, una nonna italiana simpatica, affettuosa e un po' brontolona. Fai la telecronista all'ippodromo di Horses Arena e la segretaria della scuderia "${p.stable}" del giocatore ${p.name}. ` +
+      `Puoi chiacchierare di QUALSIASI argomento, come una vera nonna: la vita, la cucina, i ricordi, l'amore, il tempo, i consigli, le battute, le curiosità. Non riportare per forza il discorso sui cavalli. ` +
+      `Rispondi SEMPRE in ${langName}, con calore e umorismo da nonna (cibo, nipoti, "ai miei tempi"), in modo naturale e non troppo lungo. ` +
+      `Quando il giocatore ti chiede di fare qualcosa nel gioco o vuole informazioni sul suo account, usa gli strumenti e non inventare dati di gioco. ` +
+      `Prima di spese sopra i 15000 fiorini chiedi conferma. Ora: ${hm(now)} (ora italiana).`,
   };
   const msgs: Msg[] = [sys, ...history.slice(-12).map((m) => ({ role: (m.role === "assistant" ? "assistant" : "user") as Msg["role"], content: String(m.content).slice(0, 1500) }))];
   const actions: string[] = [];
   for (let step = 0; step < 5; step++) {
-    const res: any = await ai.run(AI_MODEL as any, { messages: msgs, tools: TOOLS, max_tokens: 600 } as any);
+    const res: any = await ai.run(AI_MODEL as any, { messages: msgs, tools: TOOLS, max_tokens: 800 } as any);
     const calls: any[] = res?.tool_calls ?? [];
     if (!calls.length) {
       return { reply: String(res?.response ?? "").trim() || "...", actions };
