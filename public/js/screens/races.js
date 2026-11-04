@@ -83,6 +83,8 @@ export async function friendlyModal() {
 }
 
 let viewer = null;
+let raceTimer = null;
+const autoWatched = new Set();
 function closeViewer() {
   viewer?.dispose();
   viewer = null;
@@ -93,6 +95,7 @@ function closeViewer() {
 }
 
 export async function watch(r, live) {
+  if (viewer) closeViewer();
   let replay;
   try {
     replay = await api(`/race/${r.id}/replay`);
@@ -147,15 +150,30 @@ export async function race(view, id, params) {
   const tick = () => {
     const n = serverNow();
     cd.textContent = r.status === "done" ? t("Conclusa") : n < r.closeAt ? `${t("Chiude tra")} ${countdown(r.closeAt - n)}` : n < r.startAt ? `${t("Parte tra")} ${countdown(r.startAt - n)}` : isLive ? "🔴 LIVE" : "";
-    if (!canWatch && r.status !== "open" && n >= r.replayAt) race(view, id, params);
-    if (r.status === "open" && n > r.closeAt + 4000) race(view, id, params);
+    if (viewer) return; // mentre si guarda non si ridisegna niente
+    if (!canWatch && r.status !== "open" && n >= r.replayAt) rerender();
+    else if (r.status === "open" && n > r.closeAt + 4000) rerender();
+    else if (isLive && n > r.startAt + r.duration * 1000 + 6000) rerender();
+  };
+  // un solo timer per pagina: quello vecchio va fermato a ogni ridisegno
+  if (raceTimer) clearInterval(raceTimer);
+  let rerendering = false;
+  const rerender = () => {
+    if (rerendering) return;
+    rerendering = true;
+    clearInterval(raceTimer);
+    raceTimer = null;
+    race(view, id, params);
   };
   tick();
-  const iv = setInterval(tick, 1000);
-  setCleanup(() => { clearInterval(iv); closeViewer(); });
+  raceTimer = setInterval(tick, 1000);
+  setCleanup(() => { clearInterval(raceTimer); raceTimer = null; closeViewer(); });
   const w = view.querySelector("#watch");
   if (w) w.onclick = () => watch(r, isLive);
-  if (canWatch && (params?.get("watch") || isLive) && params?.get("watch")) watch(r, isLive);
+  if (canWatch && params?.get("watch") && !autoWatched.has(r.id)) {
+    autoWatched.add(r.id);
+    watch(r, isLive);
+  }
   const en = view.querySelector("#enter");
   if (en) en.onclick = async () => {
     const hid = pick && me.horses.some((x) => x.id === pick && !x.canRace) ? pick : await pickHorse(t("Chi iscrivi a {n}?", { n: r.name }), (x) => !x.canRace);
