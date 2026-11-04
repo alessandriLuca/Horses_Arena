@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Horses Arena — Trailer</title>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@800&display=swap" rel="stylesheet">
+<script type="importmap">{"imports":{"three":"/vendor/three/three.module.js"}}</script>
+<style>
+  html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:"M PLUS Rounded 1c",sans-serif}
+  #stage{position:fixed;inset:0}
+  .cap{position:fixed;left:50%;bottom:9%;transform:translateX(-50%);width:min(900px,92vw);text-align:center;color:#fff;font-size:clamp(20px,3.6vw,38px);font-weight:800;-webkit-text-stroke:1.5px #1b1a3a;paint-order:stroke fill;text-shadow:4px 4px 0 #1b1a3a;opacity:0;transition:opacity .5s}
+  .cap.on{opacity:1}
+  .title{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle,#ff8fc8cc,#6ec6ffcc);opacity:0;transition:opacity .8s;pointer-events:none}
+  .title.on{opacity:1}
+  .title h1{font-family:"Dela Gothic One",sans-serif;font-size:clamp(40px,9vw,110px);margin:0;color:#fff;-webkit-text-stroke:3px #1b1a3a;paint-order:stroke fill;text-shadow:7px 7px 0 #1b1a3a}
+  .title p{font-size:clamp(16px,2.6vw,28px);color:#fff;font-weight:800;text-shadow:2px 2px 0 #1b1a3a}
+  #play{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:linear-gradient(160deg,#6ec6ff,#ff8fc8);z-index:9;cursor:pointer;color:#fff}
+  #play h1{font-family:"Dela Gothic One",sans-serif;font-size:clamp(36px,8vw,90px);margin:0;-webkit-text-stroke:3px #1b1a3a;paint-order:stroke fill;text-shadow:6px 6px 0 #1b1a3a}
+  #play button{font:inherit;font-size:24px;padding:14px 30px;border-radius:16px;border:3px solid #1b1a3a;background:#fff;box-shadow:5px 5px 0 #1b1a3a;cursor:pointer}
+  .lines{position:fixed;inset:-20%;pointer-events:none;opacity:0;transition:opacity .4s;background:repeating-conic-gradient(from 0deg at 50% 50%,transparent 0 2.2deg,rgba(255,255,255,.55) 2.4deg 2.9deg,transparent 3.1deg 7deg);-webkit-mask:radial-gradient(circle,transparent 34%,#000 62%);mask:radial-gradient(circle,transparent 34%,#000 62%)}
+</style>
+</head>
+<body>
+<div id="stage"></div><div class="lines" id="lines"></div>
+<div class="title" id="title"><h1>HORSES ARENA</h1><p id="sub"></p></div>
+<div class="cap" id="cap"></div>
+<div id="play"><h1>🏇 HORSES ARENA</h1><button>▶ Play the trailer</button><small>turn the sound on</small></div>
+<script type="module">
+import { RaceScene } from "/js/race3d/scene.js";
+const rep = await (await fetch("/trailer-replay.json")).json();
+const scene = new RaceScene(document.getElementById("stage"), rep, {});
+const order = rep.horses.map((_, i) => i);
+let t = -10, last = performance.now(), running = false;
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (running) t += dt * speed;
+  const st = scene.render(t, dt, cur, { excitement: Math.min(1, Math.max(0.2, t / rep.duration)) });
+  cur = order.slice().sort((a, b) => st[b].p - st[a].p);
+  const rem = rep.distance - st[cur[0]].p;
+  document.getElementById("lines").style.opacity = t > 0 && rem < 300 && rem > 0 ? "0.8" : "0";
+}
+let cur = order.slice(), speed = 1;
+requestAnimationFrame(frame);
+const SCRIPT = [
+  { at: 0, title: true, sub: "A dream since university", say: "Ever since university, I have had one dream." },
+  { at: 5, say: "It all started with those crazy Japanese horse racing videos I couldn't stop watching." },
+  { at: 11, say: "I wanted a racecourse where the whole world races together. Every half hour. Live.", go: 0 },
+  { at: 18, say: "Every horse is unique. And every horse learns: from its victories, and from its fears.", cam: "follow" },
+  { at: 25, say: "Over one hundred hidden quirks. Some scream. Some bite. Some just stop to eat the grass.", cam: "tv" },
+  { at: 32, say: "Training. Breeding. Leagues. Tournaments with your friends.", cam: "heli" },
+  { at: 38, say: "Hitmen. Doping. Private detectives. Insurance. And Grandma Pina on commentary.", cam: "tv", speed: 1.6 },
+  { at: 46, say: "No controls in the race. Only you, your stable, and your choices.", cam: "tv" },
+  { at: 53, title: true, sub: "My dream is finally running. Come race with me.", say: "Horses Arena. My dream is finally running. Come race with me!" },
+];
+function voice() {
+  const vs = speechSynthesis.getVoices().filter((v) => v.lang && v.lang.startsWith("en"));
+  return vs.find((v) => /google uk|daniel|samantha|female|aria|jenny/i.test(v.name)) || vs[0] || null;
+}
+function say(text) {
+  try { const u = new SpeechSynthesisUtterance(text); const v = voice(); if (v) u.voice = v; u.lang = "en-GB"; u.rate = 1.02; u.pitch = 1.05; speechSynthesis.speak(u); } catch {}
+  const c = document.getElementById("cap"); c.textContent = text; c.classList.add("on");
+}
+document.getElementById("play").onclick = () => {
+  document.getElementById("play").remove();
+  const start = performance.now();
+  running = true; t = -10;
+  for (const s of SCRIPT) setTimeout(() => {
+    const ti = document.getElementById("title");
+    ti.classList.toggle("on", !!s.title);
+    if (s.sub) document.getElementById("sub").textContent = s.sub;
+    if (s.go !== undefined) t = s.go;
+    if (s.cam) scene.setMode(s.cam, 2);
+    if (s.speed) speed = s.speed;
+    say(s.say);
+  }, s.at * 1000);
+  void start;
+};
+window.ready = true;
+</script>
+</body>
+</html>

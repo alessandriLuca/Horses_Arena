@@ -134,6 +134,8 @@ export class Game {
     this.ensureSeason();
     this.ensureCalendar();
     this.ensureRecurring();
+    ensureNpcs(this);
+    if (!this.hasJob("npc")) this.schedule("npc", "", this.now() + 5 * MIN);
   }
 
   kv(k: string): string | null {
@@ -329,6 +331,7 @@ export class Game {
       case "heal": return this.healCheck(ref);
       case "investigation": return this.investigationDone(ref);
       case "police": return this.policeDone(ref);
+      case "npc": return npcTick(this);
     }
   }
 
@@ -1212,6 +1215,7 @@ export class Game {
 import * as OFFERS_MOD from "./offers";
 import * as BREED_MOD from "../sim/horse";
 import { TOURN_MOD } from "./tournaments";
+import { ensureNpcs, npcTick } from "./npc";
 
 export function defaultPlayerData(): PlayerData {
   return { rep: 50, security: 0, stalls: BASE_STALLS, crimeBan: 0, wins: 0, races: 0, earnings: 0, tut: {}, loans: [], boardWindow: -1, watched: [] };

@@ -8,6 +8,7 @@ import { quirkCatalog } from "./sim/quirks";
 import { OFFERS } from "./game/offers";
 import { VENUES } from "../public/js/shared/track.js";
 import { assistantChat } from "./game/assistant";
+import { npcPlayers, inviteNpc } from "./game/npc";
 
 export interface Env {
   WORLD: DurableObjectNamespace<World>;
@@ -174,6 +175,7 @@ export class World extends DurableObject<Env> {
     if (path === "/tournaments" && method === "GET") return json({ tournaments: A.tournamentList(g, p) });
     if (seg[0] === "tournament" && seg[1] && method === "GET") return json(A.tournamentDetail(g, p, seg[1]));
     if (path === "/chat" && method === "GET") return json({ messages: g.db.all("SELECT ts, player, name, text FROM chat ORDER BY id DESC LIMIT 60").reverse() });
+    if (path === "/npcs") return json({ npcs: npcPlayers(g).map((n) => ({ id: n.id, name: n.name, stable: n.stable, silks: n.silks })) });
     if (path === "/leaderboard") return json(this.leaderboard());
     if (seg[0] === "stable" && seg[1]) return json(this.stable(seg[1], p));
     if (path === "/search") {
@@ -200,6 +202,7 @@ export class World extends DurableObject<Env> {
     if (path === "/challenge") return json(A.challenge(g, me, body));
     if (seg[0] === "challenge" && seg[1]) return json(A.answerChallenge(g, me, seg[1], !!body.accept));
     if (path === "/tournament") return json(A.createTournament(g, me, body));
+    if (path === "/tournament/invite") return json(inviteNpc(g, me, body.id, body.npcId));
     if (path === "/tournament/join") return json(A.joinTournament(g, me, body.id ?? body.code, body.horseId, body.code));
     if (path === "/offers" && method === "GET") return json(A.board(g, me));
     if (path === "/offers/accept") return json(A.acceptOffer(g, me, body.offerId, body.horseId));
@@ -335,6 +338,7 @@ export default {
       const stub = env.WORLD.get(env.WORLD.idFromName("mondo"));
       return stub.fetch(request);
     }
+    if (url.pathname === "/trailer") return env.ASSETS.fetch(new Request(new URL("/trailer.html", url), request));
     return env.ASSETS.fetch(request);
   },
   async scheduled(_c: ScheduledController, env: Env) {

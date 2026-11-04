@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { inviteNpc } from "../src/game/npc";
 import { makeGame } from "./helpers";
 import * as A from "../src/game/actions";
 import { HOUR, MIN, DAY_MS } from "../src/game/time";
@@ -116,5 +117,23 @@ describe("mondo di gioco", () => {
     const d = A.tournamentDetail(g, g.player(a.id), t.id);
     expect(d.status).toBe("done");
     expect(d.table[0].points).toBeGreaterThan(0);
+  });
+});
+
+describe("scuderie NPC", () => {
+  it("vivono: corrono, scrivono, accettano inviti", () => {
+    const { g, clock, advance } = makeGame();
+    const npcs = g.db.all<any>("SELECT * FROM players WHERE json_extract(data, '$.npc') IS NOT NULL");
+    expect(npcs.length).toBeGreaterThanOrEqual(6);
+    const a = A.register(g, { name: "Ivo", stable: "Scuderia Umana" });
+    g.db.run("UPDATE players SET last_seen = ? WHERE id = ?", clock.t, a.id);
+    advance(6 * 3600_000);
+    const raced = g.db.one<{ n: number }>("SELECT COUNT(*) AS n FROM entries e JOIN players p ON p.id = e.owner WHERE json_extract(p.data, '$.npc') IS NOT NULL")!.n;
+    expect(raced).toBeGreaterThan(0);
+    g.money(a.id, 50000, "t");
+    const t = A.createTournament(g, g.player(a.id)!, { name: "Con gli NPC", private: true, rounds: 1, bots: 0, schedule: { type: "every", hours: 24 }, firstAt: clock.t + 60 * 60_000 });
+
+    const r = inviteNpc(g, g.player(a.id)!, t.id, npcs[0].id);
+    expect(r.ok).toBe(true);
   });
 });
