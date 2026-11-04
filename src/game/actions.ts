@@ -334,7 +334,7 @@ export function quickFriendly(g: Game, p: Player, body: any) {
   const rng = new Rng(g.newId("f"));
   const c = g.conditions(rng, VENUE_OK(body.venue));
   const id = g.newId("f-");
-  const start = g.now() + (body.open ? 5 * MIN : 90_000);
+  const start = g.now() + (body.open ? 5 * MIN : 100_000);
   const distance = clamp(Math.round(Number(body.distance) / 100) * 100 || 1600, 1000, 4000);
   const bots = clamp(Number(body.bots ?? 7), 0, 11);
   g.db.run(
@@ -344,7 +344,7 @@ export function quickFriendly(g: Game, p: Player, body: any) {
     JSON.stringify({ minField: bots + 1, botQuality: clamp(Number(body.botLevel ?? 0.45), 0, 1), spectators: 0.15, dopingTest: 0, creator: p.id, open: !!body.open, desc: "Amichevole: niente premi, ma si impara." }),
   );
   g.addEntry(id, h, p.id);
-  g.schedule("close", id, start - CLOSE_BEFORE + (body.open ? 0 : 50_000));
+  g.schedule("close", id, start - CLOSE_BEFORE);
   g.tut(p, "amichevole");
   return { ok: true, raceId: id, startAt: start };
 }
