@@ -108,6 +108,19 @@ export async function tournament(view, id) {
     ${d.status !== "done" ? `<button class="btn gold" id="join" style="margin-top:8px">✍️ ${t("Iscrivi un cavallo")}${d.config.fee ? ` (${money(d.config.fee)})` : ""}</button>` : ""}</div>
   <div class="card"><h3>📊 ${t("Classifica")}</h3><table class="t"><tr><th>#</th><th>${t("Cavallo")}</th><th>${t("Pt")}</th><th>${t("Corse")}</th></tr>${d.table.map((r) => `<tr class="click ${r.owner === me.id ? "mine" : ""}" data-go="/cavallo/${r.horseId}"><td>${r.pos}</td><td><b>${esc(r.name)}</b><br><small>${esc(r.stable)}${r.owner ? "" : " 🤖"}</small></td><td><b>${r.points}</b></td><td>${r.races}</td></tr>`).join("")}</table></div>
   <div class="card"><h3>🏁 ${t("Prove")}</h3>${d.races.map((r) => `<div class="race-row" data-go="/corsa/${r.id}"><div class="time">${timeHM(r.start_at)}</div><div><div class="nm">${esc(r.name)}</div><div class="meta">${t(r.status)}</div></div><span>›</span></div>`).join("") || `<p class="muted">${t("La prima prova non è ancora stata creata.")}</p>`}</div>`;
+  if (d.owner === me.id && d.status !== "done") {
+    const b = document.createElement("button");
+    b.className = "btn";
+    b.style.marginTop = "8px";
+    b.textContent = "🤖 " + t("Invita una scuderia NPC");
+    view.querySelector(".hero").appendChild(b);
+    b.onclick = async () => {
+      const { npcs } = await api("/npcs");
+      modal(`<h3>🤖 ${t("Invita una scuderia NPC")}</h3><div class="stack">${npcs.map((n) => `<button class="btn block" data-n="${n.id}" style="justify-content:flex-start">${silksSvg(n.silks, 20)} ${esc(n.stable)} <small>(${esc(n.name)})</small></button>`).join("")}</div>`, (mm, close) => {
+        mm.querySelectorAll("[data-n]").forEach((x) => (x.onclick = async () => { if (await act("/tournament/invite", { id: d.id, npcId: x.dataset.n })) { close(); tournament(view, id); } }));
+      });
+    };
+  }
   const j = view.querySelector("#join");
   if (j) j.onclick = async () => {
     const hid = await pickHorse(t("Con quale cavallo?"), (x) => !x.dead && !x.retired);

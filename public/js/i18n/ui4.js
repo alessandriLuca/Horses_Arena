@@ -1,4 +1,5 @@
 export default {
+  "Invita una scuderia NPC": ["Invite an NPC stable", "NPC-Stall einladen", "Пригласить конюшню-NPC", "NPC厩舎を招待", "邀请NPC马厩"],
   // menu "Altro"
   "Sfide e amichevoli": ["Challenges & friendlies", "Duelle & Freundschaftsrennen", "Вызовы и товарищеские", "挑戦と練習試合", "挑战与友谊赛"],
   "4 divisioni, promozioni e retrocessioni": ["4 divisions, promotion and relegation", "4 Ligen, Auf- und Abstieg", "4 дивизиона, повышение и вылет", "4部制、昇格と降格", "4个级别，升降级"],
